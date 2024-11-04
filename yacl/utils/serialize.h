@@ -22,6 +22,7 @@
 #include "yacl/utils/serializer.h"
 #include "yacl/utils/serializer_adapter.h"
 
+
 namespace yacl {
 
 // deprecated. please call SerializeVars(...) directly
@@ -50,5 +51,6 @@ inline Buffer SerializeUint128(uint128_t v) { return SerializeVars(v); }
 inline uint128_t DeserializeUint128(ByteContainerView buf) {
   return DeserializeVars<uint128_t>(buf);
 }
+
 
 }  // namespace yacl

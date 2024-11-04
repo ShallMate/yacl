@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "yacl/crypto/ecc/FourQlib/FourQ_group.h"
+#include <chrono>
 
 #include "absl/types/span.h"
 
@@ -202,11 +203,12 @@ EcPoint FourQGroup::CopyPoint(const EcPoint& point) const {
   YACL_THROW("Unsupported EcPoint type {}", point.index());
 }
 
+
+
 AffinePoint FourQGroup::GetAffinePoint(const EcPoint& point) const {
   point_t p;
   auto point_cpy = point;
   eccnorm(CastR1(point_cpy), p);
-
   return {F2elm2MPInt(p->x), F2elm2MPInt(p->y)};
 }
 
