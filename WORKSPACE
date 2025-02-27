@@ -36,3 +36,48 @@ rules_foreign_cc_dependencies(
 load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
 
 protobuf_deps()
+
+new_local_repository(
+    name = "local_apsi",
+    path = "/usr/local",
+    build_file_content = """
+cc_library(
+    name = "apsi",
+    hdrs = glob(["include/APSI-0.11/**/*.h"]),
+    srcs = [],
+    includes = ["include/APSI-0.11"],
+    linkopts = ["-Llib", "-lapsi-0.11"],
+    visibility = ["//visibility:public"],
+)
+    """,
+)
+
+new_local_repository(
+    name = "seal",
+    path = "/usr/local",
+    build_file_content = """
+cc_library(
+    name = "seal",
+    hdrs = glob(["include/SEAL-4.1/**/*.h"]),
+    srcs = [],
+    includes = ["include"],
+    linkopts = ["-Llib", "-lseal-4.1"],
+    visibility = ["//visibility:public"],
+)
+    """,
+)
+
+new_local_repository(
+    name = "kuku",
+    path = "/usr/local",
+    build_file_content = """
+cc_library(
+    name = "kuku",
+    hdrs = glob(["include/Kuku-2.1/**/*.h"]),
+    srcs = [],
+    includes = ["include"],
+    linkopts = ["-Llib", "-lkuku-2.1"],
+    visibility = ["//visibility:public"],
+)
+    """,
+)

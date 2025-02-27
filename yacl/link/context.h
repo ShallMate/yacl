@@ -317,6 +317,7 @@ class Context {
 
   // get statistics
   std::shared_ptr<const Statistics> GetStats() const;
+  std::shared_ptr<Statistics> stats_;
 
  protected:
   using P2PDirection = std::pair<int, int>;
@@ -334,7 +335,7 @@ class Context {
   uint64_t recv_timeout_ms_;
 
   // sub-context will shared statistics with parent
-  std::shared_ptr<Statistics> stats_;
+  
 
   const bool is_sub_world_;
 };

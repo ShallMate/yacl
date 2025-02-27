@@ -50,6 +50,7 @@ def yacl_deps():
 
     _simplest_ot()
     _org_interconnection()
+    _com_github_floodyberry_curve25519_donna()
 
 def _simplest_ot():
     maybe(
@@ -469,3 +470,15 @@ def _com_github_ridiculousfish_libdivide():
 
 
 
+def _com_github_floodyberry_curve25519_donna():
+    maybe(
+        http_archive,
+        name = "com_github_floodyberry_curve25519_donna",
+        strip_prefix = "curve25519-donna-2fe66b65ea1acb788024f40a3373b8b3e6f4bbb2",
+        sha256 = "ba57d538c241ad30ff85f49102ab2c8dd996148456ed238a8c319f263b7b149a",
+        type = "tar.gz",
+        build_file = "@yacl//bazel:curve25519-donna.BUILD",
+        urls = [
+            "https://github.com/floodyberry/curve25519-donna/archive/2fe66b65ea1acb788024f40a3373b8b3e6f4bbb2.tar.gz",
+        ],
+    )
