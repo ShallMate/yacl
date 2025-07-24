@@ -61,8 +61,8 @@
 //   virtual T FuncName(const TX& x, const TY& y) const = 0;
 #define CallBinaryFunc(FuncName, TX, TY)                                      \
   do {                                                                        \
-    using RES_T = decltype(FuncName(std::declval<const TX>(),                 \
-                                    std::declval<const TY>()));               \
+    using RES_T = decltype(                                                   \
+        FuncName(std::declval<const TX>(), std::declval<const TY>()));        \
                                                                               \
     switch (x, y) {                                                           \
       case yacl::OperandType::Scalar2Scalar: {                                \

@@ -335,7 +335,6 @@ class Context {
   uint64_t recv_timeout_ms_;
 
   // sub-context will shared statistics with parent
-  
 
   const bool is_sub_world_;
 };

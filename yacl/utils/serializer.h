@@ -68,7 +68,7 @@ namespace yacl {
 // > #include "yacl/utils/serializer_adapter.h"
 
 template <typename... Ts>
-inline yacl::Buffer SerializeVars(const Ts &...obj) {
+inline yacl::Buffer SerializeVars(const Ts &... obj) {
   yacl::Buffer buf;
   yacl::io::StreamBuffer sbuf(&buf);
   (..., msgpack::pack(sbuf, obj));
@@ -78,7 +78,7 @@ inline yacl::Buffer SerializeVars(const Ts &...obj) {
 // Serialize the 'obj' into buf and return the actual number of bytes written.
 // If buf is empty, only calculate the size of the serialized object.
 template <typename... Ts>
-inline size_t SerializeVarsTo(uint8_t *buf, size_t buf_len, const Ts &...obj) {
+inline size_t SerializeVarsTo(uint8_t *buf, size_t buf_len, const Ts &... obj) {
   if (buf == nullptr) {
     yacl::io::ShadowBuffer sd_buf;
     (..., msgpack::pack(sd_buf, obj));
@@ -132,7 +132,7 @@ inline auto DeserializeVars(yacl::ByteContainerView in) ->
 }
 
 template <typename... Ts>
-inline size_t DeserializeVarsTo(yacl::ByteContainerView in, Ts *...vars) {
+inline size_t DeserializeVarsTo(yacl::ByteContainerView in, Ts *... vars) {
   std::size_t off = 0;
   (..., msgpack::unpack(reinterpret_cast<const char *>(in.data()), in.size(),
                         off, internal::ref_or_copy)

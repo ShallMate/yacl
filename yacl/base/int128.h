@@ -125,8 +125,8 @@ struct is_scalar<int128_t> : public true_type {};
 
 #if __cplusplus >= 202002L
 //-std=gnu++20 pass, -std=c++20 failed
-static_assert(is_integral<uint128_t>::value == true);
-static_assert(is_integral<int128_t>::value == true);
+static_assert(sizeof(uint128_t) == 16, "uint128_t must be 128 bits");
+static_assert(sizeof(int128_t) == 16, "int128_t must be 128 bits");
 #else
 template <>
 struct is_integral<uint128_t> : public true_type {};

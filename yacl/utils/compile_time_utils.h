@@ -83,8 +83,8 @@ constexpr uint32_t crc32(const char* str) {
 
 // recursion stopper
 template <>
-constexpr uint32_t crc32<static_cast<size_t>(-1)>(
-    [[maybe_unused]] const char* str) {
+constexpr uint32_t crc32<static_cast<size_t>(-1)>([
+    [maybe_unused]] const char* str) {
   return 0xFFFFFFFF;
 }
 

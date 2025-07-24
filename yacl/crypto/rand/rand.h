@@ -26,6 +26,7 @@
 #include "yacl/base/int128.h"
 #include "yacl/crypto/openssl_wrappers.h"
 #include "yacl/crypto/rand/drbg/drbg.h"
+#include "yacl/math/mpint/mp_int.h"
 #include "yacl/secparam.h"
 
 namespace yacl::crypto {
@@ -114,6 +115,20 @@ inline std::vector<T> RandVec(uint64_t len, bool fast_mode = false) {
   std::vector<T> out(len);
   FillRand((char *)out.data(), sizeof(T) * len, fast_mode);
   return out;
+}
+
+template <typename T = uint128_t,
+          std::enable_if_t<std::is_integral_v<T>, int> = 0>
+inline T RandLtN(T n) {
+  // see: nist-sp800-90A, Appendix A.5.3
+  // efficiency: constant-round
+  auto required_size =
+      sizeof(T) + (YACL_MODULE_SECPARAM_S_UINT("rand") + 7) / 8;
+  auto rand_bytes = SecureRandBytes(required_size);
+  math::MPInt r;
+  r.FromMagBytes(rand_bytes, Endian::little);
+  math::MPInt::Mod(r, math::MPInt(n), &r);
+  return r.Get<T>();
 }
 
 }  // namespace yacl::crypto

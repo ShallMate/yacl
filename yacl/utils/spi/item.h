@@ -156,7 +156,7 @@ class Item {
       YACL_THROW_WITH_STACK(
           "{}, Item as rvalue: cannot cast from {} to {}, please use 'c++filt "
           "-t <symbol>' tool to see a human-readable name",
-          ToString(), v_.type().name(), typeid(T&&).name());
+          ToString(), v_.type().name(), typeid(T &&).name());
     }
   }
 

@@ -79,7 +79,7 @@ class SpiFactoryBase {
   //   SPI, and it represents the name of the HE algorithm in HE SPI.
   template <typename... T>
   std::unique_ptr<SPI_T> Create(const std::string &feature_name,
-                                T &&...extra_args) const {
+                                T &&... extra_args) const {
     return CreateFromArgPkg(feature_name, {std::forward<T>(extra_args)...});
   }
 
@@ -141,7 +141,7 @@ class SpiFactoryBase {
   // the names of all libraries that satisfy the parameter requirements.
   template <typename... T>
   std::vector<std::string> ListLibraries(const std::string &feature_name,
-                                         T &&...extra_args) const {
+                                         T &&... extra_args) const {
     return ListLibrariesFromArgPkg(feature_name,
                                    {std::forward<T>(extra_args)...});
   }

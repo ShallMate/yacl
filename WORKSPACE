@@ -81,3 +81,19 @@ cc_library(
 )
     """,
 )
+
+
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository") 
+
+
+git_repository(
+    name = "hedron_compile_commands",
+    commit = "d7a28301d812aeafa36469343538dbc025cec196",
+    remote = "https://github.com/hedronvision/bazel-compile-commands-extractor.git",
+)
+
+load("@hedron_compile_commands//:workspace_setup.bzl", "hedron_compile_commands_setup")
+
+hedron_compile_commands_setup()
+
+

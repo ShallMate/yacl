@@ -48,7 +48,7 @@ class ThreadPool {
   // if the thread pool has idle thread, the task will run immediately,
   // otherwise the task will wait in a queue.
   template <class F, class... Args>
-  auto Submit(F &&f, Args &&...args)
+  auto Submit(F &&f, Args &&... args)
       -> std::future<typename std::invoke_result_t<F, Args...>>;
 
   // return true if the current (self) thread is a pooled thread
@@ -74,7 +74,7 @@ class ThreadPool {
 };
 
 template <class F, class... Args>
-auto ThreadPool::Submit(F &&f, Args &&...args)
+auto ThreadPool::Submit(F &&f, Args &&... args)
     -> std::future<typename std::invoke_result_t<F, Args...>> {
   using return_type = typename std::invoke_result_t<F, Args...>;
 
