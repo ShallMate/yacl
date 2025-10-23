@@ -37,6 +37,7 @@ load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
 
 protobuf_deps()
 
+
 new_local_repository(
     name = "local_apsi",
     path = "/usr/local",
