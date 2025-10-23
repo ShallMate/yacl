@@ -27,7 +27,7 @@ ThreadPool::ThreadPool() : ThreadPool(DefaultNumThreads()) {}
 
 // the constructor just launches some amount of workers
 ThreadPool::ThreadPool(size_t num_threads) : stop_(false) {
-  SPDLOG_INFO("Create a fixed thread pool with size {}", num_threads);
+  //SPDLOG_INFO("Create a fixed thread pool with size {}", num_threads);
   YACL_ENFORCE(num_threads > 0, "num_threads must > 0");
 
   for (size_t i = 0; i < num_threads; ++i) {
