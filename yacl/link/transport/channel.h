@@ -160,9 +160,9 @@ class Channel : public IChannel, public std::enable_shared_from_this<Channel> {
 
   ~Channel() override {
     if (!send_thread_stopped_.load()) {
-      SPDLOG_WARN(
-          "Channel destructor is called before WaitLinkTaskFinish, try "
-          "stop send thread");
+      //SPDLOG_WARN(
+      //   "Channel destructor is called before WaitLinkTaskFinish, try "
+      //   "stop send thread");
       try {
         WaitAsyncSendToFinish();
       } catch (const std::exception& e) {

@@ -83,6 +83,47 @@ cc_library(
     """,
 )
 
+new_local_repository(
+    name = "openfhe",
+    path = "/usr/local",
+    build_file_content = """
+OPENFHE_LIBS = glob([
+    "lib/libOPENFHE*.so*",
+    "lib/libOPENFHE*.a*",
+    "lib64/libOPENFHE*.so*",
+    "lib64/libOPENFHE*.a*",
+])
+
+cc_library(
+    name = "openfhe",
+    hdrs = glob([
+        "include/openfhe/**/*.h",
+        "include/openfhe/**/*.hpp",
+    ]),
+    # 关键：把 .so/.a 声明为 srcs，Bazel 才会把它们作为链接输入带进 sandbox
+    srcs = OPENFHE_LIBS,
+    includes = [
+        "include",
+        "include/openfhe",
+        "include/openfhe/core",
+        "include/openfhe/pke",
+        "include/openfhe/binfhe",
+    ],
+    # 这里只保留“系统依赖库”，OpenFHE 自己的库文件已经在 srcs 里了
+    linkopts = [
+        "-ldl",
+        "-lgomp",
+        "-lntl",
+    ],
+    visibility = ["//visibility:public"],
+)
+""",
+)
+
+
+
+
+
 
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository") 
 
