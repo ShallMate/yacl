@@ -109,12 +109,32 @@ cc_library(
         "include/openfhe/pke",
         "include/openfhe/binfhe",
     ],
-    # 这里只保留“系统依赖库”，OpenFHE 自己的库文件已经在 srcs 里了
+    # 这里只保留"系统依赖库"，OpenFHE 自己的库文件已经在 srcs 里了
     linkopts = [
         "-ldl",
         "-lgomp",
         "-lntl",
     ],
+    visibility = ["//visibility:public"],
+)
+""",
+)
+
+# RELIC library for One-Pass-PSI
+new_local_repository(
+    name = "local_relic",
+    path = "/home/lgw/One-Pass-PSI-from-Pairings/out/install/linux",
+    build_file_content = """
+RELIC_LIBS = glob([
+    "lib/librelic*.a",
+    "lib/librelic*.so*",
+])
+
+cc_library(
+    name = "relic",
+    hdrs = glob(["include/relic/**/*.h"]),
+    srcs = RELIC_LIBS,
+    includes = ["include/relic"],
     visibility = ["//visibility:public"],
 )
 """,
