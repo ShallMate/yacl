@@ -11,11 +11,22 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 load("@rules_cc//cc:defs.bzl", "cc_library")
 
 cc_library(
-    name = "_donna",
-    srcs = ["curve25519-donna.c"],
-    hdrs = ["curve25519-donna.h"],
+    name = "ed25519_donna",
+    srcs = ["ed25519.c"],
+    hdrs = glob(["*.h"]),
+    includes = ["."],
+    deps = [
+        "@com_github_openssl_openssl//:openssl",
+    ],
+    copts = select({
+        "@platforms//cpu:x86_64": [
+            "-DED25519_SSE2",
+        ],
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
 )

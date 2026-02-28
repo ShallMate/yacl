@@ -18,6 +18,10 @@ load("//bazel:repositories.bzl", "yacl_deps")
 
 yacl_deps()
 
+load("@com_github_nelhage_rules_boost//:boost/boost.bzl", "boost_deps")
+
+boost_deps()
+
 load("@rules_python//python:repositories.bzl", "py_repositories")
 
 py_repositories()
@@ -140,6 +144,114 @@ cc_library(
 """,
 )
 
+new_local_repository(
+    name = "local_volepsi",
+    path = "/home/lgw/sp26/mPSI/out/install/linux",
+    build_file_content = """
+cc_library(
+    name = "headers",
+    hdrs = glob([
+        "include/**/*.h",
+        "include/**/*.hpp",
+        "include/**/*.hh",
+    ]),
+    includes = ["include"],
+    visibility = ["//visibility:public"],
+)
+
+cc_import(
+    name = "libote_static",
+    static_library = "lib/liblibOTe.a",
+    alwayslink = True,
+)
+
+cc_import(
+    name = "cryptotools_static",
+    static_library = "lib/libcryptoTools.a",
+    alwayslink = True,
+)
+
+cc_import(
+    name = "macoro_static",
+    static_library = "lib/libmacoro.a",
+    alwayslink = True,
+)
+
+cc_import(
+    name = "coproto_static",
+    static_library = "lib/libcoproto.a",
+    alwayslink = True,
+)
+
+cc_import(
+    name = "bitpolymul_static",
+    static_library = "lib/libbitpolymul.a",
+    alwayslink = True,
+)
+
+cc_import(
+    name = "sodium_static",
+    static_library = "lib/libsodium.a",
+    alwayslink = True,
+)
+
+cc_import(
+    name = "boost_system_static",
+    static_library = "lib/libboost_system.a",
+    alwayslink = True,
+)
+
+cc_import(
+    name = "boost_thread_static",
+    static_library = "lib/libboost_thread.a",
+    alwayslink = True,
+)
+
+cc_import(
+    name = "boost_filesystem_static",
+    static_library = "lib/libboost_filesystem.a",
+    alwayslink = True,
+)
+
+cc_import(
+    name = "boost_regex_static",
+    static_library = "lib/libboost_regex.a",
+    alwayslink = True,
+)
+
+cc_import(
+    name = "boost_atomic_static",
+    static_library = "lib/libboost_atomic.a",
+    alwayslink = True,
+)
+
+cc_import(
+    name = "boost_datetime_static",
+    static_library = "lib/libboost_date_time.a",
+    alwayslink = True,
+)
+
+cc_library(
+    name = "static_libs",
+    deps = [
+        ":bitpolymul_static",
+        ":boost_atomic_static",
+        ":boost_datetime_static",
+        ":boost_filesystem_static",
+        ":boost_regex_static",
+        ":boost_system_static",
+        ":boost_thread_static",
+        ":coproto_static",
+        ":cryptotools_static",
+        ":libote_static",
+        ":macoro_static",
+        ":sodium_static",
+    ],
+    visibility = ["//visibility:public"],
+)
+""",
+)
+
 
 
 
@@ -168,5 +280,3 @@ http_archive(
     strip_prefix = "eigen-3.4.0",
     urls = ["https://gitlab.com/libeigen/eigen/-/archive/3.4.0/eigen-3.4.0.tar.gz"],
 )
-
-

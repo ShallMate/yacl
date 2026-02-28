@@ -18,6 +18,10 @@ load("//bazel:repositories.bzl", "yacl_deps")
 
 yacl_deps()
 
+load("@com_github_nelhage_rules_boost//:boost/boost.bzl", "boost_deps")
+
+boost_deps()
+
 load("@rules_python//python:repositories.bzl", "py_repositories")
 
 py_repositories()
@@ -36,5 +40,4 @@ rules_foreign_cc_dependencies(
 load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
 
 protobuf_deps()
-
 

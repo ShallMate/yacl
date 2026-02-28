@@ -225,6 +225,45 @@ int ge25519_is_on_curve(const ge25519_p3 *p)
 EOF""",
 )
 
+genrule(
+    name = "sc25519_sub_nored_c",
+    outs = ["sc25519_sub_nored.c"],
+    cmd = """
+cat > $@ << EOF
+#include "sc25519.h"
+
+void sc25519_sub_nored(sc25519 *r, const sc25519 *x, const sc25519 *y) {
+  static const unsigned long long order[4] = {
+      0x5812631A5CF5D3EDULL,
+      0x14DEF9DEA2F79CD6ULL,
+      0x0000000000000000ULL,
+      0x1000000000000000ULL,
+  };
+
+  unsigned long long borrow = 0ULL;
+  for (int i = 0; i < 4; ++i) {
+    const unsigned long long yi_b = y->v[i] + borrow;
+    const unsigned long long carry_in = (yi_b < y->v[i]) ? 1ULL : 0ULL;
+    const unsigned long long xi = x->v[i];
+    r->v[i] = xi - yi_b;
+    const unsigned long long need_borrow = (xi < yi_b) ? 1ULL : 0ULL;
+    borrow = carry_in | need_borrow;
+  }
+
+  if (borrow) {
+    unsigned long long carry = 0ULL;
+    for (int i = 0; i < 4; ++i) {
+      unsigned __int128 s =
+          (unsigned __int128)r->v[i] + (unsigned __int128)order[i] + carry;
+      r->v[i] = (unsigned long long)s;
+      carry = (unsigned long long)(s >> 64);
+    }
+  }
+}
+
+EOF""",
+)
+
 cc_library(
     name = "25519",
     srcs = [
@@ -246,6 +285,11 @@ cc_library(
         "crypto_multiscalar/ed25519/amd64-maax-p3/sc25519_slide.c",
         "crypto_multiscalar/ed25519/amd64-maax-p3/sc25519_to32bytes.c",
         "crypto_multiscalar/ed25519/amd64-maax-p3/shared-consts.c",
+        "crypto_sign/ed25519/amd64/sc25519_add.S",
+        "crypto_sign/ed25519/amd64/sc25519_barrett.S",
+        "crypto_sign/ed25519/amd64/sc25519_from64bytes.c",
+        "crypto_sign/ed25519/amd64/sc25519_mul.c",
+        "crypto_sign/ed25519/amd64/ull4_mul.S",
         "crypto_nG/merged25519/amd64-maax/fe25519_cmov.c",
         "crypto_nG/merged25519/amd64-maax/ge25519_base.S",
         "crypto_nG/merged25519/amd64-maax/ge25519_scalarmult_base.c",
@@ -259,6 +303,7 @@ cc_library(
         "ge25519_scalarmult.c",
         "ge25519_sub.c",
         "ge25519_unpack.c",
+        "sc25519_sub_nored.c",
         "include-build/crypto_asm_hidden.h",
         "include-build/crypto_uint64.h",
         "include-build/crypto_verify.h",
