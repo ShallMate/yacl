@@ -70,9 +70,9 @@ yacl_cc_library(
     name = "hash_interface",
     srcs = ["hash_interface.h"],
     deps = [
+        "//yacl/base:exception",
         "//yacl:secparam",
         "//yacl/base:byte_container_view",
-        "@com_github_openssl_openssl//:openssl",
     ],
 )
 

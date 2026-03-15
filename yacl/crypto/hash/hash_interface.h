@@ -16,8 +16,7 @@
 
 #include <vector>
 
-#include "openssl/evp.h" /* for evp type conversions */
-
+#include "yacl/base/exception.h"
 #include "yacl/base/byte_container_view.h"
 #include "yacl/secparam.h"
 

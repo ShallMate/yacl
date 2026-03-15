@@ -29,7 +29,7 @@ yacl_cc_library(
     hdrs = ["FourQ_group.h"],
     deps = [
         "//yacl/crypto/ecc:spi",
-        "//yacl/crypto/hash:ssl_hash",
+        "//yacl/crypto/hash:blake3",
         "@com_github_microsoft_FourQlib//:FourQlib",
     ],
 )

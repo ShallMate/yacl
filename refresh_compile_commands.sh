@@ -49,6 +49,7 @@ refresh_compile_commands(
 " >> BUILD.bazel
 
 bazel run :refresh_compile_commands
+python3 scripts/gen_clangd_compdb.py
 
 # restore from backup
 cp WORKSPACE_bak WORKSPACE

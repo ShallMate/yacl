@@ -41,17 +41,68 @@ load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
 
 protobuf_deps()
 
+local_repository(
+    name = "com_github_google_shell",
+    path = "third_party/com_github_google_shell",
+)
+
+new_local_repository(
+    name = "com_github_google_glog",
+    path = "/usr",
+    build_file_content = """
+cc_import(
+    name = "glog_shared",
+    shared_library = "lib/x86_64-linux-gnu/libglog.so",
+)
+
+cc_import(
+    name = "libunwind_shared",
+    shared_library = "lib/x86_64-linux-gnu/libunwind.so.8",
+)
+
+cc_import(
+    name = "libunwind_x86_64_shared",
+    shared_library = "lib/x86_64-linux-gnu/libunwind-x86_64.so.8",
+)
+
+cc_library(
+    name = "glog",
+    hdrs = glob(["include/glog/**/*.h"]),
+    includes = ["include"],
+    deps = [
+        ":glog_shared",
+        ":libunwind_shared",
+        ":libunwind_x86_64_shared",
+    ],
+    linkopts = [
+        "-lgflags",
+    ],
+    visibility = ["//visibility:public"],
+)
+    """,
+)
 
 new_local_repository(
     name = "local_apsi",
     path = "/usr/local",
     build_file_content = """
+cc_import(
+    name = "apsi_static",
+    static_library = "lib/libapsi-0.11.a",
+)
+
 cc_library(
     name = "apsi",
     hdrs = glob(["include/APSI-0.11/**/*.h"]),
-    srcs = [],
     includes = ["include/APSI-0.11"],
-    linkopts = ["-Llib", "-lapsi-0.11"],
+    deps = [
+        ":apsi_static",
+        "@kuku//:kuku",
+        "@local_jsoncpp//:jsoncpp",
+        "@local_log4cplus//:log4cplus",
+        "@local_zmq//:zmq",
+        "@seal//:seal",
+    ],
     visibility = ["//visibility:public"],
 )
     """,
@@ -61,12 +112,19 @@ new_local_repository(
     name = "seal",
     path = "/usr/local",
     build_file_content = """
+cc_import(
+    name = "seal_static",
+    static_library = "lib/libseal-4.1.a",
+)
+
 cc_library(
     name = "seal",
-    hdrs = glob(["include/SEAL-4.1/**/*.h"]),
-    srcs = [],
-    includes = ["include"],
-    linkopts = ["-Llib", "-lseal-4.1"],
+    hdrs = glob([
+        "include/SEAL-4.1/**/*.h",
+        "include/SEAL-4.1/gsl/**",
+    ]),
+    includes = ["include/SEAL-4.1"],
+    deps = [":seal_static"],
     visibility = ["//visibility:public"],
 )
     """,
@@ -76,12 +134,16 @@ new_local_repository(
     name = "kuku",
     path = "/usr/local",
     build_file_content = """
+cc_import(
+    name = "kuku_static",
+    static_library = "lib/libkuku-2.1.a",
+)
+
 cc_library(
     name = "kuku",
     hdrs = glob(["include/Kuku-2.1/**/*.h"]),
-    srcs = [],
-    includes = ["include"],
-    linkopts = ["-Llib", "-lkuku-2.1"],
+    includes = ["include/Kuku-2.1"],
+    deps = [":kuku_static"],
     visibility = ["//visibility:public"],
 )
     """,
@@ -184,6 +246,12 @@ cc_import(
 )
 
 cc_import(
+    name = "volepsi_static",
+    static_library = "lib/libvolePSI.a",
+    alwayslink = True,
+)
+
+cc_import(
     name = "bitpolymul_static",
     static_library = "lib/libbitpolymul.a",
     alwayslink = True,
@@ -232,7 +300,7 @@ cc_import(
 )
 
 cc_library(
-    name = "static_libs",
+    name = "support_libs",
     deps = [
         ":bitpolymul_static",
         ":boost_atomic_static",
@@ -247,6 +315,139 @@ cc_library(
         ":macoro_static",
         ":sodium_static",
     ],
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
+    name = "static_libs",
+    deps = [
+        ":support_libs",
+        ":volepsi_static",
+    ],
+    visibility = ["//visibility:public"],
+)
+""",
+)
+
+new_local_repository(
+    name = "local_libote_feature_src",
+    path = "/home/lgw/sp26/mPSI/out/volepsi/out/libOTe",
+    build_file_content = """
+cc_library(
+    name = "kkrt_mr_impl",
+    srcs = [
+        "libOTe/Base/MasnyRindal.cpp",
+        "libOTe/NChooseOne/NcoOtExt.cpp",
+        "libOTe/NChooseOne/Kkrt/KkrtNcoOtReceiver.cpp",
+        "libOTe/NChooseOne/Kkrt/KkrtNcoOtSender.cpp",
+    ],
+    hdrs = [
+        "libOTe/Base/MasnyRindal.h",
+        "libOTe/NChooseOne/NcoOtExt.h",
+        "libOTe/NChooseOne/Kkrt/KkrtDefines.h",
+        "libOTe/NChooseOne/Kkrt/KkrtNcoOtReceiver.h",
+        "libOTe/NChooseOne/Kkrt/KkrtNcoOtSender.h",
+    ],
+    copts = [
+        "-std=c++20",
+        "-fcoroutines",
+        "-maes",
+        "-mpclmul",
+        "-msse2",
+        "-msse3",
+        "-msse4.1",
+        "-mavx2",
+        "-fPIC",
+        "-DENABLE_KKRT",
+        "-DENABLE_MR",
+    ],
+    includes = [
+        ".",
+        "cryptoTools",
+    ],
+    deps = [
+        "@local_volepsi//:headers",
+        "@local_volepsi//:support_libs",
+    ],
+    visibility = ["//visibility:public"],
+)
+""",
+)
+
+new_local_repository(
+    name = "local_flatbuffers",
+    path = "/usr/local",
+    build_file_content = """
+cc_import(
+    name = "flatbuffers_static",
+    static_library = "lib/libflatbuffers.a",
+)
+
+cc_library(
+    name = "flatbuffers",
+    hdrs = glob(["include/flatbuffers/**/*.h"]),
+    includes = ["include"],
+    deps = [":flatbuffers_static"],
+    visibility = ["//visibility:public"],
+)
+""",
+)
+
+new_local_repository(
+    name = "local_jsoncpp",
+    path = "/usr/local",
+    build_file_content = """
+cc_import(
+    name = "jsoncpp_static",
+    static_library = "lib/libjsoncpp.a",
+)
+
+cc_library(
+    name = "jsoncpp",
+    hdrs = glob(["include/json/*.h"]),
+    includes = ["include"],
+    deps = [":jsoncpp_static"],
+    visibility = ["//visibility:public"],
+)
+""",
+)
+
+new_local_repository(
+    name = "local_log4cplus",
+    path = "/usr/local",
+    build_file_content = """
+cc_import(
+    name = "log4cplus_shared",
+    shared_library = "lib/liblog4cplus.so",
+)
+
+cc_library(
+    name = "log4cplus",
+    hdrs = glob(["include/log4cplus/**/*.h"]),
+    includes = ["include"],
+    deps = [":log4cplus_shared"],
+    visibility = ["//visibility:public"],
+)
+""",
+)
+
+new_local_repository(
+    name = "local_zmq",
+    path = "/usr/local",
+    build_file_content = """
+cc_import(
+    name = "zmq_shared",
+    shared_library = "lib/libzmq.so",
+)
+
+cc_library(
+    name = "zmq",
+    hdrs = glob([
+        "include/zmq*.h",
+        "include/zmq*.hpp",
+    ]),
+    includes = ["include"],
+    deps = [":zmq_shared"],
     visibility = ["//visibility:public"],
 )
 """,

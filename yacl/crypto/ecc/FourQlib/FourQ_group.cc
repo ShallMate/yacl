@@ -18,7 +18,7 @@
 
 #include "absl/types/span.h"
 
-#include "yacl/crypto/hash/ssl_hash.h"
+#include "yacl/crypto/hash/blake3.h"
 
 namespace yacl::crypto::FourQ {
 
@@ -274,11 +274,10 @@ EcPoint FourQGroup::HashToCurve(HashToCurveStrategy strategy,
                "FourQlib only supports Autonomous strategy now. select={}",
                static_cast<int>(strategy));
 
-  std::vector<uint8_t> sha_bytes =
-      SslHash(HashAlgorithm::SHA512)
-          .Update(absl::Span(input.data(), input.size()))
-          .CumulativeHash();
-  auto* f2elmt = reinterpret_cast<f2elm_t*>(sha_bytes.data());
+  auto hash_bytes = Blake3Hash(64)
+                        .Update(absl::Span(input.data(), input.size()))
+                        .CumulativeHash();
+  auto* f2elmt = reinterpret_cast<f2elm_t*>(hash_bytes.data());
   mod1271(reinterpret_cast<felm_t*>(f2elmt)[0]);
   mod1271(reinterpret_cast<felm_t*>(f2elmt)[1]);
 

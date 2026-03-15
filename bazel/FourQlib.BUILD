@@ -46,8 +46,8 @@ make(
         ":linux_x64": {
             "ARCH": "x64",
             "AVX": "TRUE",
-            "AVX2": "FALSE",
-            "EXTENDED_SET": "FALSE",
+            "AVX2": "TRUE",
+            "EXTENDED_SET": "TRUE",
         },
         ":linux_arm64": {
             "ARCH": "ARM64",
