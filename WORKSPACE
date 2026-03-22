@@ -213,9 +213,9 @@ new_local_repository(
 cc_library(
     name = "headers",
     hdrs = glob([
-        "include/**/*.h",
-        "include/**/*.hpp",
-        "include/**/*.hh",
+        "include/**/*",
+        "include/sparsehash/*",
+        "include/sparsehash/**/*",
     ]),
     includes = ["include"],
     visibility = ["//visibility:public"],
@@ -323,6 +323,165 @@ cc_library(
     deps = [
         ":support_libs",
         ":volepsi_static",
+    ],
+    visibility = ["//visibility:public"],
+)
+""",
+)
+
+new_local_repository(
+    name = "local_circuitpsu1_volepsi",
+    path = "/home/lgw/circuitPSU1/libs/volepsi",
+    build_file_content = """
+cc_library(
+    name = "headers",
+    hdrs = glob([
+        "include/**/*.h",
+        "include/**/*.hpp",
+        "include/**/*.hh",
+    ]),
+    includes = ["include"],
+    visibility = ["//visibility:public"],
+)
+
+cc_import(
+    name = "bitpolymul_static",
+    static_library = "lib/libbitpolymul.a",
+    alwayslink = True,
+)
+
+cc_import(
+    name = "boost_atomic_static",
+    static_library = "lib/libboost_atomic.a",
+    alwayslink = True,
+)
+
+cc_import(
+    name = "boost_datetime_static",
+    static_library = "lib/libboost_date_time.a",
+    alwayslink = True,
+)
+
+cc_import(
+    name = "boost_filesystem_static",
+    static_library = "lib/libboost_filesystem.a",
+    alwayslink = True,
+)
+
+cc_import(
+    name = "boost_regex_static",
+    static_library = "lib/libboost_regex.a",
+    alwayslink = True,
+)
+
+cc_import(
+    name = "boost_system_static",
+    static_library = "lib/libboost_system.a",
+    alwayslink = True,
+)
+
+cc_import(
+    name = "boost_thread_static",
+    static_library = "lib/libboost_thread.a",
+    alwayslink = True,
+)
+
+cc_import(
+    name = "coproto_static",
+    static_library = "lib/libcoproto.a",
+    alwayslink = True,
+)
+
+cc_import(
+    name = "cryptotools_static",
+    static_library = "lib/libcryptoTools.a",
+    alwayslink = True,
+)
+
+cc_import(
+    name = "libote_static",
+    static_library = "lib/liblibOTe.a",
+    alwayslink = True,
+)
+
+cc_import(
+    name = "macoro_static",
+    static_library = "lib/libmacoro.a",
+    alwayslink = True,
+)
+
+cc_import(
+    name = "relic_static",
+    static_library = "lib/librelic_s.a",
+    alwayslink = True,
+)
+
+cc_import(
+    name = "sodium_static",
+    static_library = "lib/libsodium.a",
+    alwayslink = True,
+)
+
+cc_import(
+    name = "volepsi_static",
+    static_library = "lib/libvolePSI.a",
+    alwayslink = True,
+)
+
+cc_library(
+    name = "static_libs",
+    deps = [
+        ":bitpolymul_static",
+        ":boost_atomic_static",
+        ":boost_datetime_static",
+        ":boost_filesystem_static",
+        ":boost_regex_static",
+        ":boost_system_static",
+        ":boost_thread_static",
+        ":coproto_static",
+        ":cryptotools_static",
+        ":headers",
+        ":libote_static",
+        ":macoro_static",
+        ":relic_static",
+        ":sodium_static",
+        ":volepsi_static",
+    ],
+    linkopts = [
+        "-ldl",
+        "-lpthread",
+    ],
+    visibility = ["//visibility:public"],
+)
+""",
+)
+
+new_local_repository(
+    name = "local_circuitpsu1_securejoin",
+    path = "/home/lgw/circuitPSU1/libs/securejoin",
+    build_file_content = """
+cc_library(
+    name = "headers",
+    hdrs = glob([
+        "include/**/*.h",
+        "include/**/*.hpp",
+        "include/**/*.hh",
+    ]),
+    includes = ["include"],
+    visibility = ["//visibility:public"],
+)
+
+cc_import(
+    name = "securejoin_static",
+    static_library = "lib/libsecureJoin.a",
+    alwayslink = True,
+)
+
+cc_library(
+    name = "securejoin",
+    deps = [
+        ":headers",
+        ":securejoin_static",
     ],
     visibility = ["//visibility:public"],
 )
@@ -458,13 +617,129 @@ cc_library(
 
 
 
-load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository") 
+new_local_repository(
+    name = "system_glib",
+    path = "/usr",
+    build_file_content = """
+cc_library(
+    name = "glib",
+    hdrs = glob([
+        "include/glib-2.0/**/*.h",
+        "lib/x86_64-linux-gnu/glib-2.0/include/**/*.h",
+    ]),
+    includes = [
+        "include/glib-2.0",
+        "lib/x86_64-linux-gnu/glib-2.0/include",
+    ],
+    visibility = ["//visibility:public"],
+)
+""",
+)
 
+new_local_repository(
+    name = "securepsu",
+    path = "/home/lgw/SecurePSU",
+    build_file_content = """
+package(default_visibility = ["//visibility:public"])
 
-git_repository(
+cc_library(
+    name = "headers",
+    hdrs = glob([
+        "src/**/*.h",
+        "extern/ABY/extern/ENCRYPTO_utils/src/**/*.h",
+        "extern/HashingTables/**/*.h",
+        "extern/libOTe/libOTe/**/*.h",
+        "extern/libOTe/libOTe/**/*.hpp",
+        "extern/libOTe/cryptoTools/**/*.h",
+        "extern/libOTe/cryptoTools/**/*.hpp",
+        "extern/libOTe/cryptoTools/cryptoTools/gsl/*",
+        "extern/EzPC/SCI/src/**/*.h",
+        "extern/EzPC/SCI/src/**/*.hpp",
+        "extern/EzPC/SCI/extern/SEAL/native/src/**/*.h",
+        "build/include/relic/**/*.h",
+        "toolchain_overrides/**",
+    ]),
+    includes = [
+        "src",
+        "extern",
+        "extern/ABY/extern/ENCRYPTO_utils/src",
+        "extern/HashingTables",
+        "extern/libOTe",
+        "extern/libOTe/cryptoTools",
+        "extern/EzPC/SCI/src",
+        "extern/EzPC/SCI/extern/SEAL/native/src",
+        "build/include/relic",
+        "toolchain_overrides",
+    ],
+)
+
+cc_import(
+    name = "src_static",
+    static_library = "build/lib/libsrc.a",
+    alwayslink = True,
+)
+
+cc_import(
+    name = "sci_linearhe_static",
+    static_library = "build/lib/libSCI-LinearHE.a",
+    alwayslink = True,
+)
+
+cc_import(
+    name = "encrypto_utils_static",
+    static_library = "build/extern/ABY/extern/ENCRYPTO_utils/src/libencrypto_utils.a",
+    alwayslink = True,
+)
+
+cc_import(
+    name = "hashing_tables_static",
+    static_library = "build/extern/HashingTables/libHashingTables.a",
+    alwayslink = True,
+)
+
+cc_import(
+    name = "libote_static",
+    static_library = "build/extern/libOTe/libOTe/liblibOTe.a",
+    alwayslink = True,
+)
+
+cc_import(
+    name = "cryptotools_static",
+    static_library = "build/extern/libOTe/cryptoTools/cryptoTools/libcryptoTools.a",
+    alwayslink = True,
+)
+
+cc_import(
+    name = "relic_static",
+    static_library = "build/extern/ABY/extern/ENCRYPTO_utils/extern/relic/lib/librelic_s.a",
+    alwayslink = True,
+)
+
+cc_import(
+    name = "otextension_static",
+    static_library = "build/extern/ABY/lib/libotextension.a",
+    alwayslink = True,
+)
+
+cc_library(
+    name = "all_libs",
+    deps = [
+        ":src_static",
+        ":sci_linearhe_static",
+        ":encrypto_utils_static",
+        ":hashing_tables_static",
+        ":libote_static",
+        ":cryptotools_static",
+        ":relic_static",
+        ":otextension_static",
+    ],
+)
+""",
+)
+
+local_repository(
     name = "hedron_compile_commands",
-    commit = "d7a28301d812aeafa36469343538dbc025cec196",
-    remote = "https://github.com/hedronvision/bazel-compile-commands-extractor.git",
+    path = "third_party/hedron_compile_commands_stub",
 )
 
 load("@hedron_compile_commands//:workspace_setup.bzl", "hedron_compile_commands_setup")

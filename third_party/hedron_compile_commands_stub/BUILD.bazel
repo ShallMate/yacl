@@ -1,0 +1,4 @@
+exports_files([
+    "refresh_compile_commands.bzl",
+    "workspace_setup.bzl",
+])
