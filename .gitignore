@@ -50,3 +50,10 @@ external
 
 #brpc
 rpc_data
+
+# local benchmark/build artifacts
+.bazel_tmp/
+third_party/local_apsi_fixed/
+build_all_final*.log
+build_final_test.log
+test_paper_final*.log

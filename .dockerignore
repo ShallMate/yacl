@@ -1,0 +1,19 @@
+# Ignore Bazel output directories (can be huge)
+bazel-*
+
+# Only include the upsi example and the core workspace files needed to build it
+examples/*
+!examples/upsi
+!examples/upsi/**
+!examples/psu
+!examples/psu/**
+
+# APSI is rebuilt inside the image into this prefix; no need to send host artifacts.
+third_party/local_apsi_fixed
+
+# Ignore other potential junk
+.git
+.gitignore
+.vscode
+*.md
+*.txt

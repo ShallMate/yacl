@@ -84,7 +84,7 @@ cc_library(
 
 new_local_repository(
     name = "local_apsi",
-    path = "/usr/local",
+    path = "third_party/local_apsi_fixed",
     build_file_content = """
 cc_import(
     name = "apsi_static",
