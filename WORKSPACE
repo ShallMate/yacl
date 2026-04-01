@@ -208,7 +208,7 @@ cc_library(
 
 new_local_repository(
     name = "local_volepsi",
-    path = "/home/lgw/sp26/mPSI/out/install/linux",
+    path = "third_party/local_volepsi",
     build_file_content = """
 cc_library(
     name = "headers",

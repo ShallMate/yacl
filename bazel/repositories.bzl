@@ -241,9 +241,10 @@ def _com_github_blake3team_blake3():
         name = "com_github_blake3team_blake3",
         strip_prefix = "BLAKE3-1.5.1",
         sha256 = "822cd37f70152e5985433d2c50c8f6b2ec83aaf11aa31be9fe71486a91744f37",
+        type = "tar.gz",
         build_file = "@yacl//bazel:blake3.BUILD",
         urls = [
-            "https://github.com/BLAKE3-team/BLAKE3/archive/refs/tags/1.5.1.tar.gz",
+            "https://codeload.github.com/BLAKE3-team/BLAKE3/tar.gz/refs/tags/1.5.1",
         ],
     )
 
