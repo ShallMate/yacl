@@ -15,8 +15,18 @@
 #pragma once
 
 #define CONFIGURED 1
+#define DEV_MODE 1
 #define HAVE_TI_MODE
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcpp"
+#endif
 
 extern "C" {
 #include "sodium/private/ed25519_ref10.h"
 };
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif

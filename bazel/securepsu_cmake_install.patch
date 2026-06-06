@@ -1,0 +1,69 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 561a371..6cf4d62 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -99,3 +99,27 @@ elseif (NOT EzPC_FOUND)
+ 
+ #add_subdirectory(extern/EzPC/SCI)
+ add_subdirectory(src)
++
++install(TARGETS
++        src
++        HashingTables
++        SCI-LinearHE
++    ARCHIVE DESTINATION lib
++)
++
++install(DIRECTORY "${PROJECT_SOURCE_DIR}/src/"
++    DESTINATION include/src
++    FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp"
++)
++install(DIRECTORY "${PROJECT_SOURCE_DIR}/extern/HashingTables/"
++    DESTINATION include/HashingTables
++    FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp"
++)
++install(DIRECTORY "${PROJECT_SOURCE_DIR}/extern/EzPC/SCI/src/"
++    DESTINATION include/SCI
++    FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp"
++)
++install(DIRECTORY "${PROJECT_BINARY_DIR}/include/relic/"
++    DESTINATION include/relic
++    FILES_MATCHING PATTERN "*.h"
++)
++
+diff --git a/extern/EzPC/SCI/src/CMakeLists.txt b/extern/EzPC/SCI/src/CMakeLists.txt
+index a4e5e54..ed2d9a5 100644
+--- a/extern/EzPC/SCI/src/CMakeLists.txt
++++ b/extern/EzPC/SCI/src/CMakeLists.txt
+@@ -2,12 +2,10 @@ add_subdirectory(utils)
+ add_subdirectory(OT)
+ add_subdirectory(Millionaire)
+ add_subdirectory(NonLinear)
+-add_subdirectory(LinearHE)
+ 
+ add_library(SCI-Protocols INTERFACE)
+ 
+ target_link_libraries(SCI-Protocols
+     INTERFACE
+     SCI-OT
+     SCI-NonLinear
+-    SCI-LinearHE
+ )
+diff --git a/extern/libOTe/cryptoTools/CMakeLists.txt b/extern/libOTe/cryptoTools/CMakeLists.txt
+index f89973d..08eb843 100644
+--- a/extern/libOTe/cryptoTools/CMakeLists.txt
++++ b/extern/libOTe/cryptoTools/CMakeLists.txt
+@@ -77,11 +77,12 @@ if(NOT ENABLE_CPP_14)
+ 	set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS}  -Wno-narrowing")
+ endif()
+ 
+-configure_file(cryptoTools/Common/config.h.in "${CMAKE_CURRENT_SOURCE_DIR}/cryptoTools/Common/config.h" )
++configure_file(cryptoTools/Common/config.h.in "${CMAKE_CURRENT_BINARY_DIR}/cryptoTools/Common/config.h" )
+ 
+ #############################################
+ #       cryptoTools, tests, frontend        #
+ #############################################
++include_directories(BEFORE ${CMAKE_CURRENT_BINARY_DIR})
+ include_directories(${CMAKE_CURRENT_SOURCE_DIR}) 
+ 
+ 

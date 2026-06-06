@@ -1,0 +1,113 @@
+diff --git a/volePSI/GMW/SilentTripleGen.cpp b/volePSI/GMW/SilentTripleGen.cpp
+index 655fca7..0911fa3 100644
+--- a/volePSI/GMW/SilentTripleGen.cpp
++++ b/volePSI/GMW/SilentTripleGen.cpp
+@@ -48,7 +48,7 @@ namespace volePSI
+ 			for (u64 i = 0; i < mRecverOT.size(); i++)
+ 				mBase.mRecvChoiceBits.append(mRecverOT[i].sampleBaseChoiceBits(mPrng));
+ 			for (u64 i = 0; i < mSenderOT.size(); i++)
+-				mBase.mNumSend += mSenderOT[i].silentBaseOtCount();
++				mBase.mNumSend += mSenderOT[i].baseCount().mBaseOtCount;
+ 		}
+ 		return mBase;
+ 	}
+@@ -59,14 +59,25 @@ namespace volePSI
+ 
+ 		for (u64 i = 0; i < mSenderOT.size(); i++)
+ 		{
+-			mSenderOT[i].setSilentBaseOts(sendOts.subspan(0, mSenderOT[i].silentBaseOtCount()));
+-			sendOts = sendOts.subspan(mSenderOT[i].silentBaseOtCount());
++			auto baseCount = mSenderOT[i].baseCount();
++			mSenderOT[i].setBaseCors(
++				sendOts.subspan(0, baseCount.mBaseOtCount),
++				span<const block>{},
++				oc::ZeroBlock);
++			sendOts = sendOts.subspan(baseCount.mBaseOtCount);
+ 		}
+ 
++		u64 recvChoiceOffset = 0;
+ 		for (u64 i = 0; i < mRecverOT.size(); i++)
+ 		{
+-			mRecverOT[i].setSilentBaseOts(recvOts.subspan(0, mRecverOT[i].silentBaseOtCount()));
+-			recvOts = recvOts.subspan(mRecverOT[i].silentBaseOtCount());
++			auto baseCount = mRecverOT[i].baseCount();
++			mRecverOT[i].setBaseCors(
++				recvOts.subspan(0, baseCount.mBaseOtCount),
++				mBase.mRecvChoiceBits.subvec(recvChoiceOffset, baseCount.mBaseOtCount),
++				span<const block>{},
++				oc::BitVector{});
++			recvChoiceOffset += baseCount.mBaseOtCount;
++			recvOts = recvOts.subspan(baseCount.mBaseOtCount);
+ 		}
+ 
+ 		mHasBase = true;
+diff --git a/volePSI/RsOprf.cpp b/volePSI/RsOprf.cpp
+index a3ef9de..4149f8a 100644
+--- a/volePSI/RsOprf.cpp
++++ b/volePSI/RsOprf.cpp
+@@ -25,7 +25,7 @@ namespace volePSI
+ 
+ 		if (mMalicious)
+ 		{
+-			mVoleSender.mMalType = oc::SilentSecType::Malicious;
++			mVoleSender.mSecurityType = oc::SilentSecType::Malicious;
+ 			ro.Update(ws);
+ 			ro.Final(hBuff);
+ 			co_await(chl.send(std::move(hBuff)));
+@@ -247,7 +247,11 @@ namespace volePSI
+ 	Proto RsOprfSender::genVole(PRNG& prng, Socket& chl, bool reduceRounds)
+ 	{
+ 		if (reduceRounds)
+-			mVoleSender.configure(mPaxos.size(), oc::SilentBaseType::Base);
++			mVoleSender.configure(
++				mPaxos.size(),
++				mVoleSender.mSecurityType,
++				mVoleSender.mLpnMultType,
++				oc::SilentBaseType::Base);
+ 
+ 		return mVoleSender.silentSendInplace(mD, mPaxos.size(), prng, chl);
+ 	}
+@@ -295,7 +299,7 @@ namespace volePSI
+ 
+ 		if (mMalicious)
+ 		{
+-			mVoleRecver.mMalType = oc::SilentSecType::Malicious;
++			mVoleRecver.mSecurityType = oc::SilentSecType::Malicious;
+ 			co_await(chl.recv(Hws));
+ 		}
+ 
+@@ -492,7 +496,11 @@ namespace volePSI
+ 	Proto RsOprfReceiver::genVole(u64 n, PRNG& prng, Socket& chl, bool reducedRounds)
+ 	{
+ 		if (reducedRounds)
+-			mVoleRecver.configure(n, oc::SilentBaseType::Base);
++			mVoleRecver.configure(
++				n,
++				mVoleRecver.mSecurityType,
++				mVoleRecver.mLpnMultType,
++				oc::SilentBaseType::Base);
+ 		return mVoleRecver.silentReceiveInplace(n, prng, chl);
+ 	}
+ 
+diff --git a/volePSI/RsOprf.h b/volePSI/RsOprf.h
+index 14e9682..9a4a7a8 100644
+--- a/volePSI/RsOprf.h
++++ b/volePSI/RsOprf.h
+@@ -28,7 +28,7 @@ namespace volePSI
+         u64 mSsp = 40;
+         bool mDebug = false;
+ 
+-        void setMultType(oc::MultType type) { mVoleSender.mMultType = type; };
++        void setMultType(oc::MultType type) { mVoleSender.mLpnMultType = type; };
+ 
+         Proto send(u64 n, PRNG& prng, Socket& chl, u64 mNumThreads = 0, bool reducedRounds = false);
+ 
+@@ -54,7 +54,7 @@ namespace volePSI
+         u64 mSsp = 40;
+         bool mDebug = false;
+ 
+-        void setMultType(oc::MultType type) { mVoleRecver.mMultType = type; };
++        void setMultType(oc::MultType type) { mVoleRecver.mLpnMultType = type; };
+ 
+         Proto receive(span<const block> values, span<block> outputs, PRNG& prng, Socket& chl, u64 mNumThreads = 0, bool reducedRounds = false);
+ 

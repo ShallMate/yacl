@@ -12,21 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@yacl//bazel:yacl.bzl", "yacl_cmake_external")
+load("@rules_cc//cc:defs.bzl", "cc_library")
 
 package(default_visibility = ["//visibility:public"])
 
-filegroup(
-    name = "all_srcs",
-    srcs = glob(["**"]),
-)
-
-yacl_cmake_external(
+cc_library(
     name = "fmtlib",
-    cache_entries = {
-        "FMT_TEST": "OFF",
-    },
+    hdrs = glob(["include/fmt/**/*.h"]),
     defines = ["FMT_HEADER_ONLY"],
-    lib_source = ":all_srcs",
-    out_headers_only = True,
+    includes = ["include"],
 )

@@ -1,0 +1,60 @@
+diff --git a/extern/ABY/extern/ENCRYPTO_utils/src/ENCRYPTO_utils/crypto/crypto.cpp b/extern/ABY/extern/ENCRYPTO_utils/src/ENCRYPTO_utils/crypto/crypto.cpp
+index 3679f36..a8f6ec0 100644
+--- a/extern/ABY/extern/ENCRYPTO_utils/src/ENCRYPTO_utils/crypto/crypto.cpp
++++ b/extern/ABY/extern/ENCRYPTO_utils/src/ENCRYPTO_utils/crypto/crypto.cpp
+@@ -389,14 +389,14 @@ void des_encrypt(uint8_t* resbuf, uint8_t* inbuf, uint8_t* key, bool encrypt) {
+ 	DES_cblock		outblock;
+ 	DES_key_schedule schedule;
+ 
+-	memcpy(msgblock, inbuf, 8);
+-	memcpy( keyblock, key,8);
++	memcpy(&msgblock, inbuf, 8);
++	memcpy( &keyblock, key,8);
+ 	DES_set_key( &keyblock, &schedule );
+ 
+ 	/* Encryption occurs here */
+ 	DES_ecb_encrypt(&msgblock, &outblock, &schedule, (int) encrypt);
+ 
+-	memcpy(resbuf, outblock, 8);
++	memcpy(resbuf, &outblock, 8);
+ }
+@@ -406,19 +406,19 @@ void des3_encrypt(uint8_t* resbuf, uint8_t* inbuf, uint8_t* key, bool encrypt)
+ 	DES_cblock		outblock;
+ 	DES_key_schedule schedule1, schedule2, schedule3;
+ 
+-	memcpy(msgblock, inbuf, 8);
++	memcpy(&msgblock, inbuf, 8);
+ 
+-	memcpy( keyblock1, key,8);
+-	memcpy( keyblock2, key+8,8);
+-	memcpy( keyblock2, key+16,8);
++	memcpy( &keyblock1, key,8);
++	memcpy( &keyblock2, key+8,8);
++	memcpy( &keyblock2, key+16,8);
+ 
+ 	DES_set_key( &keyblock1, &schedule1 );
+ 	DES_set_key( &keyblock2, &schedule2 );
+ 	DES_set_key( &keyblock3, &schedule3 );
+ 
+ 	/* Encryption occurs here */
+ 	DES_ecb3_encrypt(&msgblock, &outblock, &schedule1, &schedule2, &schedule2, (int) encrypt);
+ 
+-	memcpy(resbuf, outblock, 8);
++	memcpy(resbuf, &outblock, 8);
+ }
+ 
+ 
+diff --git a/extern/EzPC/SCI/src/utils/group_openssl.h b/extern/EzPC/SCI/src/utils/group_openssl.h
+index f572f69..8b2fb5e 100644
+--- a/extern/EzPC/SCI/src/utils/group_openssl.h
++++ b/extern/EzPC/SCI/src/utils/group_openssl.h
+@@ -160,7 +160,9 @@ inline bool Point::operator==(Point & rhs) {
+ inline Group::Group() {
+ 	ec_group = EC_GROUP_new_by_curve_name(NID_X9_62_prime256v1);//NIST P-256
+ 	bn_ctx = BN_CTX_new();
++#if !defined(OPENSSL_IS_BORINGSSL) && OPENSSL_VERSION_NUMBER < 0x30000000L
+ 	EC_GROUP_precompute_mult(ec_group, bn_ctx);
++#endif
+ 	EC_GROUP_get_order(ec_group, order.n, bn_ctx);
+ 	scratch = new unsigned char[scratch_size];
+ }

@@ -1,0 +1,417 @@
+diff --git a/secure-join/CorGenerator/Base.h b/secure-join/CorGenerator/Base.h
+index 816c441..f585800 100644
+--- a/secure-join/CorGenerator/Base.h
++++ b/secure-join/CorGenerator/Base.h
+@@ -119,6 +119,16 @@ namespace secJoin
+             return get<block>(mOtRecvMsg, mOtRecvIndex, n);
+         }
+ 
++        oc::BitVector getRecvOtChoice(u64 n)
++        {
++            if (mOtRecvIndex + n > mOtRecvChoice.size())
++                throw RTE_LOC;
++
++            oc::BitVector choices;
++            choices.append(mOtRecvChoice, n, mOtRecvIndex);
++            return choices;
++        }
++
+         span<block> getRecvVole(u64 n)
+         {
+             return get<block>(mVoleA, mVoleRecvIndex, n);
+@@ -130,4 +140,4 @@ namespace secJoin
+         }
+ 
+     };
+-}
++}
+diff --git a/secure-join/CorGenerator/BinOleBatch.cpp b/secure-join/CorGenerator/BinOleBatch.cpp
+index d27a9b0..5bd2dd0 100644
+--- a/secure-join/CorGenerator/BinOleBatch.cpp
++++ b/secure-join/CorGenerator/BinOleBatch.cpp
+@@ -37,7 +37,7 @@ namespace secJoin
+         mSendRecv | match{
+             [&](SendBatch& send) {
+                 send.mSender.configure(mSize);
+-                r.mSendSize = send.mSender.silentBaseOtCount();
++                r.mSendSize = send.mSender.baseCount().mBaseOtCount;
+             },
+ 
+             [&](RecvBatch& recv) {
+@@ -56,10 +56,20 @@ namespace secJoin
+ 
+         mSendRecv | match{
+             [&](SendBatch& send) {
+-                send.mSender.setSilentBaseOts(sMsg.getSendOt(send.mSender.silentBaseOtCount()));
++                auto baseCount = send.mSender.baseCount();
++                send.mSender.setBaseCors(
++                    sMsg.getSendOt(baseCount.mBaseOtCount),
++                    span<const block>{},
++                    oc::ZeroBlock);
+             },
+             [&](RecvBatch& recv) {
+-                recv.mReceiver.setSilentBaseOts(sMsg.getRecvOt(recv.mReceiver.silentBaseOtCount()));
++                auto baseCount = recv.mReceiver.baseCount();
++                auto choices = sMsg.getRecvOtChoice(baseCount.mBaseOtCount);
++                recv.mReceiver.setBaseCors(
++                    sMsg.getRecvOt(baseCount.mBaseOtCount),
++                    choices,
++                    span<const block>{},
++                    oc::BitVector{});
+             }
+         };
+     }
+@@ -179,13 +189,15 @@ namespace secJoin
+ 
+             if (state->mDebug)
+             {
+-                baseSend.resize(mReceiver.silentBaseOtCount());
++                baseSend.resize(mReceiver.baseCount().mBaseOtCount);
+                 co_await sock.recv(baseSend);
+ 
+                 {
++                    auto& gen = std::get<oc::RegularPprfReceiver<block, oc::CoeffCtxGF2>>(
++                        mReceiver.mGenVar);
+                     for (u64 i = 0; i < baseSend.size(); ++i)
+                     {
+-                        if (mReceiver.mGen.mBaseOTs(i) != baseSend[i][mReceiver.mGen.mBaseChoices(i)])
++                        if (gen.mBaseOTs(i) != baseSend[i][gen.mBaseChoices(i)])
+                         {
+                             std::cout << "OleBatch::getTask() base OTs do not match. " << LOCATION << std::endl;
+                             std::terminate();
+@@ -194,19 +206,20 @@ namespace secJoin
+                 }
+             }
+ 
+-            assert(mReceiver.mGen.hasBaseOts());
++            assert(mReceiver.hasBaseCors());
+             mReceiver.mMultType = oc::MultType::Tungsten;
+             mReceiver.mA = std::move(threadState.mA);
+             mReceiver.mEncodeTemp = std::move(threadState.mEncodeTemp);
+-            mReceiver.mGen.mTempBuffer = std::move(threadState.mPprfTemp);
+-            mReceiver.mGen.mEagerSend = false;
++            auto& gen = std::get<oc::RegularPprfReceiver<block, oc::CoeffCtxGF2>>(mReceiver.mGenVar);
++            gen.mTempBuffer = std::move(threadState.mPprfTemp);
++            gen.mEagerSend = false;
+ 
+             co_await mReceiver.silentReceiveInplace(mReceiver.mRequestNumOts, prng, sock, oc::ChoiceBitPacking::True);
+             compressRecver(mReceiver.mA, add, mult);
+ 
+             threadState.mA = std::move(mReceiver.mA);
+             threadState.mEncodeTemp = std::move(mReceiver.mEncodeTemp);
+-            threadState.mPprfTemp = std::move(mReceiver.mGen.mTempBuffer);
++            threadState.mPprfTemp = std::move(gen.mTempBuffer);
+ 
+         }
+ 
+@@ -235,23 +248,25 @@ namespace secJoin
+         {
+             if (state->mDebug)
+             {
+-                co_await sock.send(coproto::copy(mSender.mGen.mBaseOTs));
++                auto& gen = std::get<oc::RegularPprfSender<block, oc::CoeffCtxGF2>>(mSender.mGenVar);
++                co_await sock.send(coproto::copy(gen.mBaseOTs));
+             }
+ 
+-            assert(mSender.mGen.hasBaseOts());
++            assert(mSender.hasBaseCors());
+             mSender.mMultType = oc::MultType::Tungsten;
+             
+             mSender.mB = std::move(threadState.mB);
+             mSender.mEncodeTemp = std::move(threadState.mEncodeTemp);
+-            mSender.mGen.mTempBuffer = std::move(threadState.mPprfTemp);
+-            mSender.mGen.mEagerSend = false;
++            auto& gen = std::get<oc::RegularPprfSender<block, oc::CoeffCtxGF2>>(mSender.mGenVar);
++            gen.mTempBuffer = std::move(threadState.mPprfTemp);
++            gen.mEagerSend = false;
+ 
+             co_await mSender.silentSendInplace(prng.get(), mSender.mRequestNumOts, prng, sock);
+-            compressSender(mSender.mDelta, mSender.mB, add, mult);
++            compressSender(mSender.mDelta.value(), mSender.mB, add, mult);
+ 
+             threadState.mB = std::move(mSender.mB);
+             threadState.mEncodeTemp = std::move(mSender.mEncodeTemp);
+-            threadState.mPprfTemp = std::move(mSender.mGen.mTempBuffer);
++            threadState.mPprfTemp = std::move(gen.mTempBuffer);
+         }
+ 
+         corReady.set();
+@@ -542,4 +557,4 @@ namespace secJoin
+     }
+ 
+ 
+-}
++}
+diff --git a/secure-join/CorGenerator/F4Vole/SilentF4VoleReceiver.h b/secure-join/CorGenerator/F4Vole/SilentF4VoleReceiver.h
+index 9bd22ca..f19ff66 100644
+--- a/secure-join/CorGenerator/F4Vole/SilentF4VoleReceiver.h
++++ b/secure-join/CorGenerator/F4Vole/SilentF4VoleReceiver.h
+@@ -84,7 +84,7 @@ namespace secJoin
+ 
+ 		// The multi-point punctured PRF for generating
+ 		// the sparse vectors.
+-		oc::RegularPprfReceiver<F, G, Ctx> mGen;
++		oc::RegularPprfReceiver<F, Ctx> mGen;
+ 
+ 		// The internal buffers for holding the expanded vectors.
+ 		// mA  = mB + mC * delta
+@@ -280,7 +280,11 @@ namespace secJoin
+ 			mBaseType = type;
+ 
+ 
+-			syndromeDecodingConfigure(mNumPartitions, mSizePer, mNoiseVecSize, mSecParam, mRequestSize, mMultType);
++			auto cfg = oc::syndromeDecodingConfigure(
++				mSecParam, mRequestSize, mMultType, oc::SdNoiseDistribution::Regular, 2);
++			mNumPartitions = cfg.mNumPartitions;
++			mSizePer = cfg.mSizePer;
++			mNoiseVecSize = cfg.mNoiseVectorSize;
+ 
+ 
+ 			mGen.configure(mSizePer, mNumPartitions);
+diff --git a/secure-join/CorGenerator/F4Vole/SilentF4VoleSender.h b/secure-join/CorGenerator/F4Vole/SilentF4VoleSender.h
+index 5441d00..561ac54 100644
+--- a/secure-join/CorGenerator/F4Vole/SilentF4VoleSender.h
++++ b/secure-join/CorGenerator/F4Vole/SilentF4VoleSender.h
+@@ -57,7 +57,7 @@ namespace secJoin
+         Ctx mCtx;
+ 
+         // the pprf used to generate the noise vector.
+-        oc::RegularPprfSender<F, G, Ctx> mGen;
++        oc::RegularPprfSender<F, Ctx> mGen;
+ 
+         // the number of correlations requested.
+         u64 mRequestSize = 0;
+@@ -233,9 +233,11 @@ namespace secJoin
+             mState = State::Configured;
+             mBaseType = type;
+ 
+-            syndromeDecodingConfigure(
+-                mNumPartitions, mSizePer, mNoiseVecSize,
+-                mSecParam, mRequestSize, mMultType);
++            auto cfg = oc::syndromeDecodingConfigure(
++                mSecParam, mRequestSize, mMultType, oc::SdNoiseDistribution::Regular, 2);
++            mNumPartitions = cfg.mNumPartitions;
++            mSizePer = cfg.mSizePer;
++            mNoiseVecSize = cfg.mNoiseVectorSize;
+ 
+             mGen.configure(mSizePer, mNumPartitions);
+         }
+@@ -565,4 +567,3 @@ namespace secJoin
+     };
+ 
+ }
+-
+diff --git a/secure-join/CorGenerator/OtBatch.cpp b/secure-join/CorGenerator/OtBatch.cpp
+index 7ecb36f..4fda6bc 100644
+--- a/secure-join/CorGenerator/OtBatch.cpp
++++ b/secure-join/CorGenerator/OtBatch.cpp
+@@ -21,7 +21,7 @@ namespace secJoin
+     {
+         mMsg.resize(mReceiver.mRequestNumOts);
+         mChoice.resize(mReceiver.mRequestNumOts);
+-        assert(mReceiver.mGen.hasBaseOts());
++        assert(mReceiver.hasBaseCors());
+         mReceiver.mMultType = oc::MultType::Tungsten;
+ 
+         return mReceiver.silentReceive(mChoice, mMsg, prng, sock);
+@@ -46,7 +46,7 @@ namespace secJoin
+     macoro::task<> OtBatch::SendOtBatch::sendTask(PRNG& prng, oc::Socket& sock)
+     {
+         mMsg2.resize(mSender.mRequestNumOts);
+-        assert(mSender.hasSilentBaseOts());
++        assert(mSender.hasBaseCors());
+         mSender.mMultType = oc::MultType::Tungsten;
+ 
+         return mSender.silentSend(mMsg2, prng, sock);
+@@ -109,7 +109,7 @@ namespace secJoin
+         mSendRecv | match{
+             [&](SendOtBatch& send) {
+                 send.mSender.configure(mSize);
+-                r.mSendSize = send.mSender.silentBaseOtCount();
++                r.mSendSize = send.mSender.baseCount().mBaseOtCount;
+             },
+             [&](RecvOtBatch& recv) {
+                 recv.mReceiver.configure(mSize);
+@@ -127,10 +127,20 @@ namespace secJoin
+ 
+         mSendRecv | match{
+             [&](SendOtBatch& send) {
+-                send.mSender.setSilentBaseOts(base.getSendOt(send.mSender.silentBaseOtCount()));
++                auto baseCount = send.mSender.baseCount();
++                send.mSender.setBaseCors(
++                    base.getSendOt(baseCount.mBaseOtCount),
++                    span<const block>{},
++                    oc::ZeroBlock);
+             },
+             [&](RecvOtBatch& recv) {
+-                recv.mReceiver.setSilentBaseOts(base.getRecvOt(recv.mReceiver.silentBaseOtCount()));
++                auto baseCount = recv.mReceiver.baseCount();
++                auto choices = base.getRecvOtChoice(baseCount.mBaseOtCount);
++                recv.mReceiver.setBaseCors(
++                    base.getRecvOt(baseCount.mBaseOtCount),
++                    choices,
++                    span<const block>{},
++                    oc::BitVector{});
+             }
+         };
+     }
+@@ -159,20 +169,24 @@ namespace secJoin
+             {
+                 if (mSendRecv.index() == 0)
+                 {
+-                    co_await mSock.send(coproto::copy(std::get<0>(mSendRecv).mSender.mGen.mBaseOTs));
++                    auto& gen = std::get<oc::RegularPprfSender<block, oc::CoeffCtxGF2>>(
++                        std::get<0>(mSendRecv).mSender.mGenVar);
++                    co_await mSock.send(coproto::copy(gen.mBaseOTs));
+ 
+                 }
+                 else
+                 {
+ 
+-                    msg.resize(std::get<1>(mSendRecv).mReceiver.silentBaseOtCount());
++                    msg.resize(std::get<1>(mSendRecv).mReceiver.baseCount().mBaseOtCount);
+                     co_await mSock.recv(msg);
+ 
+                     {
+                         auto& recv = std::get<1>(mSendRecv);
++                        auto& gen = std::get<oc::RegularPprfReceiver<block, oc::CoeffCtxGF2>>(
++                            recv.mReceiver.mGenVar);
+                         for (u64 i = 0; i < msg.size(); ++i)
+                         {
+-                            if (recv.mReceiver.mGen.mBaseOTs(i) != msg[i][recv.mReceiver.mGen.mBaseChoices(i)])
++                            if (gen.mBaseOTs(i) != msg[i][gen.mBaseChoices(i)])
+                             {
+                                 std::cout << "OtBatch::getTask() base OTs do not match. " << LOCATION << std::endl;
+                                 std::terminate();
+@@ -270,4 +284,4 @@ namespace secJoin
+     //}
+ 
+ 
+-}
++}
+diff --git a/secure-join/CorGenerator/TritOtBatch.cpp b/secure-join/CorGenerator/TritOtBatch.cpp
+index bba9997..b5e103c 100644
+--- a/secure-join/CorGenerator/TritOtBatch.cpp
++++ b/secure-join/CorGenerator/TritOtBatch.cpp
+@@ -60,7 +60,7 @@ namespace secJoin
+ 		mSendRecv | match{
+ 			[&](SendBatch& send) {
+ 				send.mSender.configure(mSize);
+-				r.mSendSize = send.mSender.silentBaseOtCount();
++				r.mSendSize = send.mSender.baseCount().mBaseOtCount;
+ 			},
+ 
+ 			[&](RecvBatch& recv) {
+@@ -79,12 +79,20 @@ namespace secJoin
+ 
+ 		mSendRecv | match{
+ 			[&](SendBatch& send) {
+-				send.mSender.setSilentBaseOts(
+-					base.getSendOt(send.mSender.silentBaseOtCount()));
++				auto baseCount = send.mSender.baseCount();
++				send.mSender.setBaseCors(
++					base.getSendOt(baseCount.mBaseOtCount),
++					span<const block>{},
++					oc::ZeroBlock);
+ 			},
+ 			[&](RecvBatch& recv) {
+-				recv.mReceiver.setSilentBaseOts(
+-					base.getRecvOt(recv.mReceiver.silentBaseOtCount()));
++				auto baseCount = recv.mReceiver.baseCount();
++				auto choices = base.getRecvOtChoice(baseCount.mBaseOtCount);
++				recv.mReceiver.setBaseCors(
++					base.getRecvOt(baseCount.mBaseOtCount),
++					choices,
++					span<const block>{},
++					oc::BitVector{});
+ 			}
+ 		};
+ 	}
+@@ -293,13 +301,15 @@ namespace secJoin
+ 
+ 			if (state->mDebug)
+ 			{
+-				baseSend.resize(mReceiver.silentBaseOtCount());
++				baseSend.resize(mReceiver.baseCount().mBaseOtCount);
+ 				co_await sock.recv(baseSend);
+ 
+ 				{
++					auto& gen = std::get<oc::RegularPprfReceiver<block, oc::CoeffCtxGF2>>(
++						mReceiver.mGenVar);
+ 					for (u64 i = 0; i < baseSend.size(); ++i)
+ 					{
+-						if (mReceiver.mGen.mBaseOTs(i) != baseSend[i][mReceiver.mGen.mBaseChoices(i)])
++						if (gen.mBaseOTs(i) != baseSend[i][gen.mBaseChoices(i)])
+ 						{
+ 							std::cout << "F4RecvOleBatch::getTask() base OTs do not match. " << LOCATION << std::endl;
+ 							std::terminate();
+@@ -308,12 +318,13 @@ namespace secJoin
+ 				}
+ 			}
+ 
+-			assert(mReceiver.mGen.hasBaseOts());
++			assert(mReceiver.hasBaseCors());
+ 			mReceiver.mMultType = oc::MultType::Tungsten;
+ 			mReceiver.mA = std::move(threadState.mA);
+ 			mReceiver.mEncodeTemp = std::move(threadState.mEncodeTemp);
+-			mReceiver.mGen.mTempBuffer = std::move(threadState.mPprfTemp);
+-			mReceiver.mGen.mEagerSend = false;
++			auto& gen = std::get<oc::RegularPprfReceiver<block, oc::CoeffCtxGF2>>(mReceiver.mGenVar);
++			gen.mTempBuffer = std::move(threadState.mPprfTemp);
++			gen.mEagerSend = false;
+ 
+ 			mReceiver.mDebug = state->mDebug;
+ 
+@@ -324,7 +335,7 @@ namespace secJoin
+ 
+ 			threadState.mA = std::move(mReceiver.mA);
+ 			threadState.mEncodeTemp = std::move(mReceiver.mEncodeTemp);
+-			threadState.mPprfTemp = std::move(mReceiver.mGen.mTempBuffer);
++			threadState.mPprfTemp = std::move(gen.mTempBuffer);
+ 
+ 		}
+ 
+@@ -352,17 +363,19 @@ namespace secJoin
+ 
+ 			if (state->mDebug)
+ 			{
+-				co_await sock.send(coproto::copy(mSender.mGen.mBaseOTs));
++				auto& gen = std::get<oc::RegularPprfSender<block, oc::CoeffCtxGF2>>(mSender.mGenVar);
++				co_await sock.send(coproto::copy(gen.mBaseOTs));
+ 			}
+ 
+-			assert(mSender.mGen.hasBaseOts());
++			assert(mSender.hasBaseCors());
+ 			mSender.mMultType = oc::MultType::Tungsten;
+ 
+ 
+ 			mSender.mB = std::move(threadState.mB);
+ 			mSender.mEncodeTemp = std::move(threadState.mEncodeTemp);
+-			mSender.mGen.mTempBuffer = std::move(threadState.mPprfTemp);
+-			mSender.mGen.mEagerSend = false;
++			auto& gen = std::get<oc::RegularPprfSender<block, oc::CoeffCtxGF2>>(mSender.mGenVar);
++			gen.mTempBuffer = std::move(threadState.mPprfTemp);
++			gen.mEagerSend = false;
+ 
+ 			mSender.mDebug = state->mDebug;
+ 
+@@ -370,11 +383,11 @@ namespace secJoin
+ 			co_await mSender.silentSendInplace(prng.get(), mSender.mRequestNumOts, prng, sock);
+ 
+ 
+-			compressSender(mSender.mDelta, mSender.mB);
++			compressSender(mSender.mDelta.value(), mSender.mB);
+ 
+ 			threadState.mB = std::move(mSender.mB);
+ 			threadState.mEncodeTemp = std::move(mSender.mEncodeTemp);
+-			threadState.mPprfTemp = std::move(mSender.mGen.mTempBuffer);
++			threadState.mPprfTemp = std::move(gen.mTempBuffer);
+ 		}
+ 
+ 
+@@ -513,4 +526,4 @@ namespace secJoin
+ 		}
+ 	}
+ 
+-}
++}

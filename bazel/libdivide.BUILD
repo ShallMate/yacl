@@ -12,21 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@yacl//bazel:yacl.bzl", "yacl_cmake_external")
+load("@rules_cc//cc:defs.bzl", "cc_library")
 
 package(default_visibility = ["//visibility:public"])
 
-filegroup(
-    name = "all_srcs",
-    srcs = glob(["**"]),
-)
-
-yacl_cmake_external(
+cc_library(
     name = "libdivide",
-    cache_entries = {
-        "BUILD_TESTS": "OFF",
-    },
-    lib_source = ":all_srcs",
-    out_headers_only = True,
-    out_include_dir = "include",
+    hdrs = ["libdivide.h"],
+    includes = ["."],
 )

@@ -26,7 +26,9 @@
 #include "yacl/secparam.h"
 
 /* submodules */
-#if defined(__linux__) && defined(__x86_64)
+#if defined(YACL_FORCE_PORTABLE_OT)
+#include "yacl/kernel/algorithms/portable_ot_interface.h"
+#elif defined(__linux__) && defined(__x86_64)
 #include "yacl/kernel/algorithms/x86_asm_ot_interface.h"
 #else
 #include "yacl/kernel/algorithms/portable_ot_interface.h"

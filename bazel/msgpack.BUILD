@@ -12,25 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@yacl//bazel:yacl.bzl", "yacl_cmake_external")
+load("@rules_cc//cc:defs.bzl", "cc_library")
 
 package(default_visibility = ["//visibility:public"])
 
-filegroup(
-    name = "all_srcs",
-    srcs = glob(["**"]),
-)
-
-yacl_cmake_external(
+cc_library(
     name = "msgpack",
-    cache_entries = {
-        "MSGPACK_CXX17": "ON",
-        "MSGPACK_USE_BOOST": "OFF",
-        "MSGPACK_BUILD_EXAMPLES": "OFF",
-        "BUILD_SHARED_LIBS": "OFF",
-        "MSGPACK_BUILD_TESTS": "OFF",
-    },
+    hdrs = glob(["include/**/*.h", "include/**/*.hpp"]),
     defines = ["MSGPACK_NO_BOOST"],
-    lib_source = ":all_srcs",
-    out_headers_only = True,
+    includes = ["include"],
 )

@@ -25,9 +25,11 @@ WARNING_FLAGS = [
     "-Werror",
 ]
 
+CXX_STANDARD_FLAGS = ["-std=c++17"]
+
 # set `SPDLOG_ACTIVE_LEVEL=1(SPDLOG_LEVEL_DEBUG)` to enable debug level log
 DEBUG_FLAGS = ["-DSPDLOG_ACTIVE_LEVEL=1", "-O0", "-g"]
-RELEASE_FLAGS = ["-O2"]
+RELEASE_FLAGS = ["-O3"]
 FAST_FLAGS = ["-O1"]
 
 AES_COPT_FLAGS = select({
@@ -56,18 +58,29 @@ OMP_LINKFLAGS = select({
 })
 
 def _yacl_copts():
-    return select({
+    return CXX_STANDARD_FLAGS + select({
         "@yacl//bazel:yacl_build_as_release": RELEASE_FLAGS,
         "@yacl//bazel:yacl_build_as_debug": DEBUG_FLAGS,
         "@yacl//bazel:yacl_build_as_fast": FAST_FLAGS,
         "//conditions:default": FAST_FLAGS,
     }) + WARNING_FLAGS
 
+def _yacl_linkopts():
+    return select({
+        "@platforms//os:linux": ["-no-pie"],
+        "//conditions:default": [],
+    })
+
 def yacl_cc_binary(
         copts = [],
+        linkopts = [],
         **kargs):
     cc_binary(
-        copts = copts + _yacl_copts(),
+        # Keep default build mode flags first so target-local copts can
+        # intentionally override them (for example -O3 over the repo default
+        # -O2 in release mode).
+        copts = _yacl_copts() + copts,
+        linkopts = _yacl_linkopts() + linkopts,
         **kargs
     )
 
@@ -86,6 +99,12 @@ def yacl_cc_library(
 def yacl_cmake_external(**attrs):
     if "generate_args" not in attrs:
         attrs["generate_args"] = ["-GNinja"]
+    if "build_args" not in attrs:
+        attrs["build_args"] = ["--parallel", "8"]
+    env = dict(attrs.get("env", {}))
+    if "CMAKE_BUILD_PARALLEL_LEVEL" not in env:
+        env["CMAKE_BUILD_PARALLEL_LEVEL"] = "8"
+    attrs["env"] = env
     return cmake(**attrs)
 
 def yacl_configure_make(**attrs):
@@ -96,11 +115,13 @@ def yacl_configure_make(**attrs):
 def yacl_cc_test(
         copts = [],
         deps = [],
+        linkopts = [],
         **kwargs):
     cc_test(
         copts = _yacl_copts() + copts,
         deps = deps + [
             "@com_google_googletest//:gtest_main",
         ],
+        linkopts = _yacl_linkopts() + linkopts,
         **kwargs
     )

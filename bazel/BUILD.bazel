@@ -12,7 +12,64 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@rules_foreign_cc//toolchains/native_tools:native_tools_toolchain.bzl", "native_tool_toolchain")
+
 package(default_visibility = ["//visibility:public"])
+
+native_tool_toolchain(
+    name = "usr_bin_m4_tool",
+    path = "/usr/bin/m4",
+)
+
+native_tool_toolchain(
+    name = "usr_bin_autoconf_tool",
+    path = "/usr/bin/autoconf",
+)
+
+native_tool_toolchain(
+    name = "usr_bin_automake_tool",
+    path = "/usr/bin/automake",
+)
+
+native_tool_toolchain(
+    name = "usr_bin_make_tool",
+    path = "/usr/bin/make",
+)
+
+native_tool_toolchain(
+    name = "usr_bin_pkgconfig_tool",
+    path = "/usr/bin/pkg-config",
+)
+
+toolchain(
+    name = "usr_bin_m4_toolchain",
+    toolchain = ":usr_bin_m4_tool",
+    toolchain_type = "@rules_foreign_cc//toolchains:m4_toolchain",
+)
+
+toolchain(
+    name = "usr_bin_autoconf_toolchain",
+    toolchain = ":usr_bin_autoconf_tool",
+    toolchain_type = "@rules_foreign_cc//toolchains:autoconf_toolchain",
+)
+
+toolchain(
+    name = "usr_bin_automake_toolchain",
+    toolchain = ":usr_bin_automake_tool",
+    toolchain_type = "@rules_foreign_cc//toolchains:automake_toolchain",
+)
+
+toolchain(
+    name = "usr_bin_make_toolchain",
+    toolchain = ":usr_bin_make_tool",
+    toolchain_type = "@rules_foreign_cc//toolchains:make_toolchain",
+)
+
+toolchain(
+    name = "usr_bin_pkgconfig_toolchain",
+    toolchain = ":usr_bin_pkgconfig_tool",
+    toolchain_type = "@rules_foreign_cc//toolchains:pkgconfig_toolchain",
+)
 
 config_setting(
     name = "yacl_build_as_release",

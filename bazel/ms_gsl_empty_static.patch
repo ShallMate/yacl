@@ -1,0 +1,28 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 8ee4ef6..79f6264 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -4,6 +4,8 @@ project(GSL VERSION 4.1.0 LANGUAGES CXX)
+ 
+ add_library(GSL INTERFACE)
+ add_library(Microsoft.GSL::GSL ALIAS GSL)
++add_library(gsl_cmake STATIC gsl_cmake_dummy.cpp)
++set_target_properties(gsl_cmake PROPERTIES OUTPUT_NAME gsl_cmake)
+ 
+ # https://cmake.org/cmake/help/latest/variable/PROJECT_IS_TOP_LEVEL.html
+ string(COMPARE EQUAL ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_SOURCE_DIR} PROJECT_IS_TOP_LEVEL)
+@@ -35,6 +37,7 @@ if (GSL_INSTALL)
+ 
+     install(TARGETS GSL EXPORT ${export_name} INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+     install(EXPORT ${export_name} NAMESPACE ${namespace} DESTINATION ${cmake_files_install_dir})
++    install(TARGETS gsl_cmake ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+     export(TARGETS GSL NAMESPACE ${namespace} FILE ${export_name}.cmake)
+ 
+     set(gls_config_version "${CMAKE_CURRENT_BINARY_DIR}/Microsoft.GSLConfigVersion.cmake")
+diff --git a/gsl_cmake_dummy.cpp b/gsl_cmake_dummy.cpp
+new file mode 100644
+index 0000000..50877d7
+--- /dev/null
++++ b/gsl_cmake_dummy.cpp
+@@ -0,0 +1 @@
++namespace microsoft_gsl_bazel { void anchor() {} }

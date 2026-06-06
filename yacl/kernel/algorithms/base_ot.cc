@@ -20,7 +20,9 @@ namespace yacl::crypto {
 namespace {
 
 std::unique_ptr<BaseOTInterface> GetOtInterface() {
-#if defined(__linux__) && defined(__x86_64)
+#if defined(YACL_FORCE_PORTABLE_OT)
+  return std::make_unique<PortableOtInterface>();
+#elif defined(__linux__) && defined(__x86_64)
   // x86 asm ot does not support macOS
   return std::make_unique<X86AsmOtInterface>();
 #else

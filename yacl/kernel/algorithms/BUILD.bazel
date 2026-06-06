@@ -66,13 +66,12 @@ yacl_cc_library(
         "//yacl/kernel/type:ot_store_utils",
         "//yacl/link",
         "@com_google_absl//absl/types:span",
+        ":portable_ot_interface",
     ] + select({
         "@bazel_tools//src/conditions:linux_x86_64": [
             ":x86_asm_ot_interface",
         ],
-        "//conditions:default": [
-            ":portable_ot_interface",
-        ],
+        "//conditions:default": [],
     }),
 )
 

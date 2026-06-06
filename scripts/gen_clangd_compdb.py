@@ -1,8 +1,14 @@
 #!/usr/bin/env python3
 
 import json
+import os
 import pathlib
 import sys
+
+
+SOURCE_SUFFIXES = {".cc", ".cpp", ".c", ".cxx"}
+HEADER_SUFFIXES = {".h", ".hh", ".hpp", ".hxx", ".inc", ".ipp", ".tcc"}
+INCLUDE_FLAGS = ("-I", "-isystem", "-iquote")
 
 
 def _is_under(path: pathlib.Path, root: pathlib.Path) -> bool:
@@ -11,6 +17,25 @@ def _is_under(path: pathlib.Path, root: pathlib.Path) -> bool:
         return True
     except ValueError:
         return False
+
+
+def _normalize_include_path(path_raw, directory: pathlib.Path):
+    path = pathlib.Path(str(path_raw))
+    if path.is_absolute():
+        abs_path = path
+    else:
+        candidate = directory / path
+        if path.parts and path.parts[0] == "external":
+            candidate = directory / "bazel-out" / ".." / ".." / ".." / path
+        abs_path = candidate.resolve()
+
+    # Bazel's glog system package symlinks include -> /usr/include.
+    # Keeping that explicit -isystem /usr/include in front of libstdc++
+    # breaks `#include_next <stdlib.h>` in clangd parsing.
+    if str(abs_path) == "/usr/include":
+        return None
+
+    return str(abs_path)
 
 
 def _sanitize_arguments(args, directory: pathlib.Path):
@@ -30,27 +55,44 @@ def _sanitize_arguments(args, directory: pathlib.Path):
             i += 1
             continue
 
-        if a in ("-I", "-isystem", "-iquote") and i + 1 < len(args):
-            p_raw = args[i + 1]
-            p = pathlib.Path(str(p_raw))
-            abs_p = p if p.is_absolute() else (directory / p).resolve()
-
-            # Bazel's glog system package symlinks include -> /usr/include.
-            # Keeping that explicit -isystem /usr/include in front of libstdc++
-            # breaks `#include_next <stdlib.h>` in clangd parsing.
-            if str(abs_p) == "/usr/include":
-                i += 2
-                continue
-
-            sanitized.append(a)
-            sanitized.append(p_raw)
+        if a in INCLUDE_FLAGS and i + 1 < len(args):
+            abs_path = _normalize_include_path(args[i + 1], directory)
+            if abs_path is not None:
+                sanitized.append(a)
+                sanitized.append(abs_path)
             i += 2
+            continue
+
+        matched_flag = next(
+            (flag for flag in INCLUDE_FLAGS if a.startswith(flag) and a != flag),
+            None,
+        )
+        if matched_flag is not None:
+            abs_path = _normalize_include_path(a[len(matched_flag) :], directory)
+            if abs_path is not None:
+                sanitized.append(matched_flag)
+                sanitized.append(abs_path)
+            i += 1
             continue
 
         sanitized.append(a)
         i += 1
 
     return sanitized
+
+
+def _logical_abs_path(path: pathlib.Path, directory: pathlib.Path) -> pathlib.Path:
+    if path.is_absolute():
+        return path
+
+    # Preserve workspace-local symlink paths such as bazel-out/ while still
+    # normalizing ".." segments for filtering and deduplication.
+    return pathlib.Path(os.path.abspath(directory / path))
+
+
+def _is_interesting_file(path: pathlib.Path) -> bool:
+    suffix = path.suffix.lower()
+    return suffix in SOURCE_SUFFIXES or suffix in HEADER_SUFFIXES or suffix == ""
 
 
 def main() -> int:
@@ -73,31 +115,28 @@ def main() -> int:
         file_field = str(e.get("file", ""))
         if not file_field:
             continue
-
         if file_field.startswith("external/"):
             continue
-        if file_field.startswith("/usr/include/"):
-            continue
-        suffix = pathlib.Path(file_field).suffix.lower()
-        if suffix not in {".cc", ".cpp", ".c", ".cxx"}:
+
+        file_path = pathlib.Path(file_field)
+        if not _is_interesting_file(file_path):
             continue
 
-        # Resolve to absolute path for filtering decisions.
-        p = pathlib.Path(file_field)
-        if p.is_absolute():
-            abs_p = p
-        else:
-            directory = pathlib.Path(str(e.get("directory", workspace)))
-            abs_p = (directory / p).resolve()
+        # Convert to an absolute path for filtering decisions, but keep
+        # workspace-visible symlink paths (e.g. bazel-out/) intact so clangd can
+        # match files opened through those paths.
+        directory = pathlib.Path(str(e.get("directory", workspace)))
+        abs_p = _logical_abs_path(file_path, directory)
 
-        # Drop system/external headers and anything outside workspace.
+        # Keep workspace files, external/bazel-generated files reachable through
+        # workspace symlinks, and installed headers in /usr/local/include.
+        # System headers under /usr/include are intentionally omitted because
+        # they are numerous and not useful for workspace diagnostics.
         if str(abs_p).startswith("/usr/include/"):
             continue
-        if not _is_under(abs_p, workspace):
-            continue
-        if _is_under(abs_p, workspace / "external"):
-            continue
-        if _is_under(abs_p, workspace / "third_party"):
+        if not (
+            _is_under(abs_p, workspace) or str(abs_p).startswith("/usr/local/include/")
+        ):
             continue
 
         file_key = str(abs_p)
@@ -106,6 +145,7 @@ def main() -> int:
         seen_files.add(file_key)
 
         copied = dict(e)
+        copied["file"] = str(abs_p)
         copied["arguments"] = _sanitize_arguments(
             list(e.get("arguments", [])), pathlib.Path(str(e.get("directory", workspace)))
         )

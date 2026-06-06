@@ -1,0 +1,23 @@
+build --repo_env=LD_LIBRARY_PATH=
+build --action_env=LD_LIBRARY_PATH=
+build --host_action_env=LD_LIBRARY_PATH=
+build --config=all
+build:all --target_pattern_file=bazel/default_targets.txt
+build:one --target_pattern_file=
+build --show_loading_progress
+build --show_progress
+build --show_progress_rate_limit=5
+build --output_filter=^(//yacl|//examples)
+build --jobs=HOST_CPUS
+build --experimental_cc_shared_library
+build -c opt
+build --linkopt=-fuse-ld=gold
+build --host_linkopt=-fuse-ld=gold
+build --copt=-march=native
+build --copt=-mtune=native
+build --copt=-O3
+build --host_copt=-march=native
+build --host_copt=-mtune=native
+build --host_copt=-O3
+build --cxxopt=-std=c++17
+build --host_cxxopt=-std=c++17

@@ -1,0 +1,151 @@
+diff --git a/cryptoTools/thirdparty/fetch.cmake b/cryptoTools/thirdparty/fetch.cmake
+--- a/cryptoTools/thirdparty/fetch.cmake
++++ b/cryptoTools/thirdparty/fetch.cmake
+@@ -10,6 +10,10 @@ function(RUN)
+     )
+     message("${PARSED_ARGS_NAME}")
+ 
++    if(PARSED_ARGS_WD)
++        file(MAKE_DIRECTORY ${PARSED_ARGS_WD})
++    endif()
++
+ 
+     execute_process(
+         COMMAND ${PARSED_ARGS_CMD}
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -88,12 +88,12 @@ if(ENABLE_MR_KYBER AND (NOT MSVC))
+ endif()
+ 
+ add_subdirectory(libOTe)
+-add_subdirectory(libOTe_Tests)
++add_subdirectory(libOTe_Tests EXCLUDE_FROM_ALL)
+ 
+ #############################################
+ #              Build Frontend               #
+ #############################################
+-add_subdirectory(frontend)
++add_subdirectory(frontend EXCLUDE_FROM_ALL)
+ 
+ 
+ 
+diff --git a/cryptoTools/CMakeLists.txt b/cryptoTools/CMakeLists.txt
+--- a/cryptoTools/CMakeLists.txt
++++ b/cryptoTools/CMakeLists.txt
+@@ -39,8 +39,8 @@ include("${CMAKE_CURRENT_LIST_DIR}/cmake/cryptoToolsDepHelper.cmake")
+ 
+ 
+ add_subdirectory(cryptoTools)
+-add_subdirectory(tests_cryptoTools)
+-add_subdirectory(frontend_cryptoTools)
++add_subdirectory(tests_cryptoTools EXCLUDE_FROM_ALL)
++add_subdirectory(frontend_cryptoTools EXCLUDE_FROM_ALL)
+ 
+ configure_file(cryptoTools/Common/config.h.in "cryptoTools/Common/config.h" )
+ 
+diff --git a/cryptoTools/cmake/install.cmake b/cryptoTools/cmake/install.cmake
+--- a/cryptoTools/cmake/install.cmake
++++ b/cryptoTools/cmake/install.cmake
+@@ -36,7 +36,7 @@ install(FILES
+ 
+ # install library
+ install(
+-    TARGETS cryptoTools tests_cryptoTools
++    TARGETS cryptoTools
+     DESTINATION ${CMAKE_INSTALL_LIBDIR}
+     EXPORT cryptoToolsTargets)
+ 
+@@ -53,12 +53,6 @@ install(
+     DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/"
+     FILES_MATCHING PATTERN "*.h")
+ 
+-# tests_cryptoTools headers
+-install(
+-    DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/../tests_cryptoTools"
+-    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/"
+-    FILES_MATCHING PATTERN "*.h")
+-
+ # install config
+ install(EXPORT cryptoToolsTargets
+   FILE cryptoToolsTargets.cmake
+diff --git a/cryptoTools/thirdparty/getCoproto.cmake b/cryptoTools/thirdparty/getCoproto.cmake
+--- a/cryptoTools/thirdparty/getCoproto.cmake
++++ b/cryptoTools/thirdparty/getCoproto.cmake
+@@ -74,6 +74,15 @@
+ #run(NAME "Build"           CMD ${BUILD_CMD}     WD ${CLONE_DIR})
+ #run(NAME "Install"         CMD ${INSTALL_CMD}   WD ${CLONE_DIR})
+ 
++file(READ "${CLONE_DIR}/CMakeLists.txt" COPROTO_TOP_CMAKE)
++string(REPLACE "add_subdirectory (\"tests\")"
++               "add_subdirectory (\"tests\" EXCLUDE_FROM_ALL)"
++               COPROTO_TOP_CMAKE "${COPROTO_TOP_CMAKE}")
++string(REPLACE "add_subdirectory (\"frontend\")"
++               "add_subdirectory (\"frontend\" EXCLUDE_FROM_ALL)"
++               COPROTO_TOP_CMAKE "${COPROTO_TOP_CMAKE}")
++file(WRITE "${CLONE_DIR}/CMakeLists.txt" "${COPROTO_TOP_CMAKE}")
++
+ SET(COPROTO_NO_SYSTEM_PATH ${NO_SYSTEM_PATH} )
+ SET(COPROTO_FETCH_SPAN OFF )
+ SET(COPROTO_FETCH_FUNCTION2 ON )
+diff --git a/cmake/install.cmake b/cmake/install.cmake
+--- a/cmake/install.cmake
++++ b/cmake/install.cmake
+@@ -49,8 +49,7 @@ install(FILES
+         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libOTe
+ )
+ 
+-set(exportLibs 
+-    "libOTe;libOTe_Tests;")
++set(exportLibs "libOTe;")
+ 
+ if(LIBOTE_SHARED)
+     set(exportLibs "${exportLibs}libOTeShared;")
+@@ -81,6 +80,22 @@ install(
+     DESTINATION ${CMAKE_INSTALL_LIBDIR}
+     EXPORT libOTeTargets)
+ 
++foreach(dep_lib
++    libboost_atomic.a
++    libboost_chrono.a
++    libboost_container.a
++    libboost_date_time.a
++    libboost_exception.a
++    libboost_filesystem.a
++    libboost_regex.a
++    libboost_thread.a
++)
++    if(EXISTS "${OC_THIRDPARTY_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/${dep_lib}")
++        install(FILES "${OC_THIRDPARTY_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/${dep_lib}"
++                DESTINATION ${CMAKE_INSTALL_LIBDIR})
++    endif()
++endforeach()
++
+ # install headers
+ install(
+     DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/../libOTe/ 
+@@ -88,12 +101,6 @@ install(
+     DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/"
+     FILES_MATCHING PATTERN "*.h")
+ 
+-# install test headers
+-install(
+-    DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/../libOTe_Tests/ 
+-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/libOTe_Tests 
+-    FILES_MATCHING PATTERN "*.h")
+-
+ # install config
+ install(EXPORT libOTeTargets
+   FILE libOTeTargets.cmake
+diff --git a/cryptoTools/thirdparty/getSodium.cmake b/cryptoTools/thirdparty/getSodium.cmake
+--- a/cryptoTools/thirdparty/getSodium.cmake
++++ b/cryptoTools/thirdparty/getSodium.cmake
+@@ -63,7 +63,7 @@ if(NOT SODIUM_FOUND)
+         endif()
+ 
+     
+-        set(AUTOGEN_CMD "./autogen.sh" "-s")
++        set(AUTOGEN_CMD "./autogen.sh" "-b" "-s")
+         set(CONFIGURE_CMD "./configure" "--prefix=${OC_THIRDPARTY_INSTALL_PREFIX}" ${WITH_PIC} "--verbose")
+         set(BUILD_CMD     "make" "-j" "${PARALLEL_FETCH}")
+         set(INSTALL_CMD   ${SUDO} "make" "install")

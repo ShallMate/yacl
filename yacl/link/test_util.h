@@ -57,8 +57,12 @@ inline bool IsPortAvailable(uint16_t port) {
 // SetupBrpcWorld with automatic port probing
 ///////////////////////////////////////////////////////////////////////////////
 inline std::vector<std::shared_ptr<Context>> SetupBrpcWorld(
-    const std::string& id, size_t world_size) {
+    const std::string& id, size_t world_size,
+    uint32_t http_timeout_ms = 0) {
   ContextDesc ctx_desc;
+  if (http_timeout_ms != 0) {
+    ctx_desc.http_timeout_ms = http_timeout_ms;
+  }
 
   // Start probing from default base port
   uint16_t port = 10086;
@@ -111,6 +115,12 @@ inline std::vector<std::shared_ptr<Context>> SetupBrpcWorld(
 inline std::vector<std::shared_ptr<Context>> SetupBrpcWorld(size_t world_size) {
   auto id = fmt::format("world_{}", world_size);
   return SetupBrpcWorld(id, world_size);
+}
+
+inline std::vector<std::shared_ptr<Context>> SetupBrpcWorld(
+    size_t world_size, uint32_t http_timeout_ms) {
+  auto id = fmt::format("world_{}", world_size);
+  return SetupBrpcWorld(id, world_size, http_timeout_ms);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

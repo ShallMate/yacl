@@ -29,6 +29,11 @@ config_setting(
     values = {"compilation_mode": "opt"},
 )
 
+config_setting(
+    name = "enable_hexl",
+    values = {"define": "seal_hexl=true"},
+)
+
 default_config = {
     "SEAL_USE_MSGSL": "OFF",
     "SEAL_BUILD_DEPS": "OFF",
@@ -41,19 +46,31 @@ default_config = {
 
 x64_hexl_config = {
     "SEAL_USE_MSGSL": "OFF",
-    "SEAL_BUILD_DEPS": "OFF",
+    "SEAL_BUILD_DEPS": "ON",
     "SEAL_USE_ZLIB": "OFF",
     "SEAL_THROW_ON_TRANSPARENT_CIPHERTEXT": "OFF",  #NOTE(juhou) required by apsi
     "CMAKE_INSTALL_LIBDIR": "lib",
-    "CpuFeatures_DIR": "$EXT_BUILD_DEPS/cpu_features/lib/cmake/CpuFeatures/",
-    "EXT_BUILD_DEPS": "$EXT_BUILD_DEPS",
     "SEAL_USE_ZSTD": "ON",
     "SEAL_USE_INTEL_HEXL": "ON",
 }
 
+config_setting(
+    name = "enable_hexl_on_x64",
+    values = {
+        "define": "seal_hexl=true",
+        "compilation_mode": "opt",
+    },
+    constraint_values = [
+        "@platforms//cpu:x86_64",
+    ],
+)
+
 yacl_cmake_external(
     name = "seal",
-    cache_entries = default_config,
+    cache_entries = select({
+        ":enable_hexl_on_x64": x64_hexl_config,
+        "//conditions:default": default_config,
+    }),
     lib_source = "@com_github_microsoft_seal//:all",
     out_include_dir = "include/SEAL-4.1",
     out_static_libs = ["libseal-4.1.a"],

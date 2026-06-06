@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@yacl//bazel:yacl.bzl", "yacl_configure_make")
+load("@rules_cc//cc:defs.bzl", "cc_library")
+load("@yacl//bazel:configure_make_import.bzl", "configure_make_static_import")
 
 # An openssl build file based on a snippet found in the github issue:
 # https://github.com/bazelbuild/rules_foreign_cc/issues/337
@@ -39,32 +40,41 @@ CONFIGURE_OPTIONS = [
 ]
 
 MAKE_TARGETS = [
-    "build_programs",
-    "install_sw",
+    "build_libs",
+    "install_dev",
 ]
 
-yacl_configure_make(
-    name = "openssl",
-    args = ["-j 4"],
+configure_make_static_import(
+    name = "openssl_import",
     configure_command = "Configure",
-    configure_in_place = True,
+    configure_file = "Configure",
     configure_options = CONFIGURE_OPTIONS,
     env = select({
         "@platforms//os:macos": {
             "AR": "",
+            "CC": "/usr/bin/cc",
         },
         "//conditions:default": {
+            "AR": "/usr/bin/ar",
+            "CC": "/usr/bin/gcc",
             "MODULESDIR": "",
         },
     }),
-    lib_name = "openssl",
-    lib_source = ":all_srcs",
-    # Note that for Linux builds, libssl must come before libcrypto on the linker command-line.
-    # As such, libssl must be listed before libcrypto
-    out_static_libs = [
+    make_args = ["-j", "4"],
+    srcs = [":all_srcs"],
+    static_libs = [
         "libssl.a",
         "libcrypto.a",
     ],
     targets = MAKE_TARGETS,
+)
+
+cc_library(
+    name = "openssl",
+    linkopts = select({
+        "@platforms//os:linux": ["-ldl"],
+        "//conditions:default": [],
+    }),
+    deps = [":openssl_import"],
     visibility = ["//visibility:public"],
 )

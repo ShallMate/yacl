@@ -57,7 +57,7 @@ EcPoint Ed25519Group::Add(const EcPoint& p1, const EcPoint& p2) const {
   ge25519_p3_to_cached(&p2_cached, CastP3(p2));
 
   ge25519_p1p1 r_p1p1;
-  ge25519_add(&r_p1p1, CastP3(p1), &p2_cached);
+  ge25519_add_cached(&r_p1p1, CastP3(p1), &p2_cached);
 
   EcPoint r(std::in_place_type<Array160>);
   ge25519_p1p1_to_p3(CastP3(r), &r_p1p1);
@@ -72,7 +72,7 @@ void Ed25519Group::AddInplace(EcPoint* p1, const EcPoint& p2) const {
   ge25519_p3_to_cached(&p2_cached, CastP3(p2));
 
   ge25519_p1p1 r_p1p1;
-  ge25519_add(&r_p1p1, CastP3(*p1), &p2_cached);
+  ge25519_add_cached(&r_p1p1, CastP3(*p1), &p2_cached);
 
   ge25519_p1p1_to_p3(CastP3(*p1), &r_p1p1);
 }
@@ -82,7 +82,7 @@ EcPoint Ed25519Group::Sub(const EcPoint& p1, const EcPoint& p2) const {
   ge25519_p3_to_cached(&p2_cached, CastP3(p2));
 
   ge25519_p1p1 r_p1p1;
-  ge25519_sub(&r_p1p1, CastP3(p1), &p2_cached);
+  ge25519_sub_cached(&r_p1p1, CastP3(p1), &p2_cached);
 
   EcPoint r(std::in_place_type<Array160>);
   ge25519_p1p1_to_p3(CastP3(r), &r_p1p1);
@@ -97,7 +97,7 @@ void Ed25519Group::SubInplace(EcPoint* p1, const EcPoint& p2) const {
   ge25519_p3_to_cached(&p2_cached, CastP3(p2));
 
   ge25519_p1p1 r_p1p1;
-  ge25519_sub(&r_p1p1, CastP3(*p1), &p2_cached);
+  ge25519_sub_cached(&r_p1p1, CastP3(*p1), &p2_cached);
 
   ge25519_p1p1_to_p3(CastP3(*p1), &r_p1p1);
 }
