@@ -8,7 +8,7 @@ examples/*
 !examples/psu
 !examples/psu/**
 
-# APSI is rebuilt inside the image into this prefix; no need to send host artifacts.
+# Dependencies are resolved by Bazel; do not send stale host-local artifacts.
 third_party/local_apsi_fixed
 
 # Ignore other potential junk
@@ -17,3 +17,4 @@ third_party/local_apsi_fixed
 .vscode
 *.md
 *.txt
+!bazel/default_targets.txt

@@ -14,27 +14,32 @@ filegroup(
 )
 
 yacl_cmake_external(
-    name = "jsoncpp_static",
+    name = "glog_static",
     cache_entries = {
-        "BUILD_OBJECT_LIBS": "OFF",
         "BUILD_SHARED_LIBS": "OFF",
-        "BUILD_STATIC_LIBS": "ON",
+        "BUILD_TESTING": "OFF",
         "CMAKE_BUILD_TYPE": "Release",
         "CMAKE_INSTALL_LIBDIR": "lib",
-        "JSONCPP_WITH_CMAKE_PACKAGE": "ON",
-        "JSONCPP_WITH_EXAMPLE": "OFF",
-        "JSONCPP_WITH_PKGCONFIG_SUPPORT": "OFF",
-        "JSONCPP_WITH_POST_BUILD_UNITTEST": "OFF",
-        "JSONCPP_WITH_TESTS": "OFF",
+        "WITH_GFLAGS": "ON",
+        "WITH_GTEST": "OFF",
+        "WITH_PKGCONFIG": "OFF",
+        "WITH_UNWIND": "OFF",
     },
+    deps = [
+        "@com_github_gflags_gflags//:gflags",
+    ],
     lib_source = ":all_srcs",
     out_include_dir = "include",
     out_lib_dir = "lib",
-    out_static_libs = ["libjsoncpp.a"],
+    out_static_libs = ["libglog.a"],
     targets = ["install"],
 )
 
 cc_library(
-    name = "jsoncpp",
-    deps = [":jsoncpp_static"],
+    name = "glog",
+    linkopts = ["-pthread"],
+    deps = [
+        ":glog_static",
+        "@com_github_gflags_gflags//:gflags",
+    ],
 )

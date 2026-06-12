@@ -11,6 +11,7 @@ filegroup(
             "**/.git/**",
         ],
     ) + [
+        "//grpc/src/compiler:distribution",
         "//src:distribution",
     ],
 )
@@ -21,7 +22,7 @@ yacl_cmake_external(
         "CMAKE_BUILD_TYPE": "Release",
         "CMAKE_INSTALL_LIBDIR": "lib",
         "FLATBUFFERS_BUILD_BENCHMARKS": "OFF",
-        "FLATBUFFERS_BUILD_FLATC": "OFF",
+        "FLATBUFFERS_BUILD_FLATC": "ON",
         "FLATBUFFERS_BUILD_FLATHASH": "OFF",
         "FLATBUFFERS_BUILD_FLATLIB": "ON",
         "FLATBUFFERS_BUILD_GRPCTEST": "OFF",
@@ -34,6 +35,7 @@ yacl_cmake_external(
     lib_source = ":all_srcs",
     out_include_dir = "include",
     out_lib_dir = "lib",
+    out_binaries = ["flatc"],
     out_static_libs = ["libflatbuffers.a"],
     targets = ["install"],
 )

@@ -118,7 +118,7 @@ def _com_github_osu_crypto_libote():
     )
 
 def _example_local_repositories():
-    _system_glog()
+    _com_github_google_glog()
     _seal_compat()
     _local_apsi()
     _apsi_support_repositories()
@@ -185,42 +185,13 @@ def _llvm_project_archives():
         ],
     )
 
-def _system_glog():
+def _com_github_google_glog():
     maybe(
-        native.new_local_repository,
+        git_repository,
         name = "com_github_google_glog",
-        path = "/usr",
-        build_file_content = """
-cc_import(
-    name = "glog_shared",
-    shared_library = "lib/x86_64-linux-gnu/libglog.so",
-)
-
-cc_import(
-    name = "libunwind_shared",
-    shared_library = "lib/x86_64-linux-gnu/libunwind.so.8",
-)
-
-cc_import(
-    name = "libunwind_x86_64_shared",
-    shared_library = "lib/x86_64-linux-gnu/libunwind-x86_64.so.8",
-)
-
-cc_library(
-    name = "glog",
-    hdrs = glob(["include/glog/**/*.h"]),
-    includes = ["include"],
-    deps = [
-        ":glog_shared",
-        ":libunwind_shared",
-        ":libunwind_x86_64_shared",
-    ],
-    linkopts = [
-        "-lgflags",
-    ],
-    visibility = ["//visibility:public"],
-)
-""",
+        remote = "https://github.com/google/glog.git",
+        tag = "v0.6.0",
+        build_file = "@yacl//bazel:glog.BUILD",
     )
 
 def _seal_compat():
@@ -239,31 +210,13 @@ cc_library(
 
 def _local_apsi():
     maybe(
-        native.new_local_repository,
+        git_repository,
         name = "local_apsi",
-        path = "third_party/local_apsi_fixed",
-        build_file_content = """
-cc_import(
-    name = "apsi_static",
-    static_library = "lib/libapsi-0.11.a",
-)
-
-cc_library(
-    name = "apsi",
-    hdrs = glob(["include/APSI-0.11/**/*.h"]),
-    includes = ["include/APSI-0.11"],
-    deps = [
-        ":apsi_static",
-        "@kuku//:kuku",
-        "@microsoft_gsl//:gsl",
-        "@local_jsoncpp//:jsoncpp",
-        "@local_log4cplus//:log4cplus",
-        "@local_zmq//:zmq",
-        "@seal//:seal",
-    ],
-    visibility = ["//visibility:public"],
-)
-""",
+        remote = "https://github.com/microsoft/apsi.git",
+        tag = "v0.11.0",
+        build_file = "@yacl//bazel:apsi.BUILD",
+        patch_args = ["-p1"],
+        patches = ["@yacl//bazel:apsi_seal_4_1_compat.patch"],
     )
 
 def _apsi_support_repositories():
@@ -878,6 +831,8 @@ def _com_github_gflags_gflags():
         strip_prefix = "gflags-2.2.2",
         sha256 = "34af2f15cf7367513b352bdcd2493ab14ce43692d2dcd9dfc499492966c64dcf",
         type = "tar.gz",
+        patch_args = ["-p1"],
+        patches = ["@yacl//bazel:patches/gflags_google_namespace.patch"],
         urls = [
             "https://github.com/gflags/gflags/archive/v2.2.2.tar.gz",
         ],

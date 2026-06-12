@@ -1,0 +1,24 @@
+diff --git a/common/apsi/oprf/oprf_receiver.h b/common/apsi/oprf/oprf_receiver.h
+index e4376c2..9934dd7 100644
+--- a/common/apsi/oprf/oprf_receiver.h
++++ b/common/apsi/oprf/oprf_receiver.h
+@@ -88,8 +88,7 @@ namespace apsi {
+                         throw std::invalid_argument("index out of bounds");
+                     }
+                     return ECPoint::scalar_span_type(
+-                        factor_data_.span().subspan(index * factor_size, factor_size).data(),
+-                        factor_size);
++                        factor_data_.begin() + index * factor_size, factor_size);
+                 }
+
+                 auto get_factor(std::size_t index) const -> ECPoint::scalar_span_const_type
+@@ -98,8 +97,7 @@ namespace apsi {
+                         throw std::invalid_argument("index out of bounds");
+                     }
+                     return ECPoint::scalar_span_const_type(
+-                        factor_data_.span().subspan(index * factor_size, factor_size).data(),
+-                        factor_size);
++                        factor_data_.cbegin() + index * factor_size, factor_size);
+                 }
+
+             private:
