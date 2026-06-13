@@ -46,6 +46,7 @@ COMMON_CACHE_ENTRIES = {
     "ENABLE_IKNP": "ON",
     "ENABLE_KKRT": "ON",
     "ENABLE_KOS": "ON",
+    "ENABLE_LOGVOLE": "ON",
     "ENABLE_MOCK_OT": "OFF",
     "ENABLE_MR": "ON",
     "ENABLE_MRR": "ON",
@@ -70,6 +71,7 @@ COMMON_CACHE_ENTRIES = {
     "FETCH_COPROTO": "ON",
     "FETCH_LIBDIVIDE": "ON",
     "FETCH_RELIC": "ON",
+    "FETCH_SEAL": "ON",
     "FETCH_SODIUM": "ON",
     "CRYPTOTOOLS_BUILD_DIR": "$BUILD_TMPDIR/cryptoTools",
     "LIBOTE_STD_VER": "20",
@@ -100,6 +102,7 @@ SUPPORT_STATIC_LIBS = [
 
 LIBOTE_ALL_STATIC_LIBS = [
     "liblibOTe.a",
+    "libseal-4.1.a",
     "libKyberOT.a",
     "libSimplestOT.a",
 ] + SUPPORT_STATIC_LIBS + [

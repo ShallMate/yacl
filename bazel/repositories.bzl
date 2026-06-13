@@ -110,10 +110,16 @@ def _com_github_osu_crypto_libote():
         git_repository,
         name = "com_github_osu_crypto_libote",
         remote = "https://github.com/osu-crypto/libOTe.git",
-        commit = "d3ae8921b71c470d2e3db6d63ae9bb38092077c1",
+        commit = "0412d3114bcf9c9955d0647aad8e49fe6a444461",
         recursive_init_submodules = True,
         build_file = "@yacl//bazel:libote.BUILD",
         patch_args = ["-p1"],
+        patch_cmds = [
+            "perl -0pi -e 's/add_subdirectory\\(libOTe_Tests\\)/add_subdirectory(libOTe_Tests EXCLUDE_FROM_ALL)/' CMakeLists.txt",
+            "perl -0pi -e 's/add_subdirectory\\(frontend\\)/add_subdirectory(frontend EXCLUDE_FROM_ALL)/' CMakeLists.txt",
+            "perl -0pi -e 's/add_subdirectory\\(tests_cryptoTools\\)/add_subdirectory(tests_cryptoTools EXCLUDE_FROM_ALL)/' cryptoTools/CMakeLists.txt",
+            "perl -0pi -e 's/add_subdirectory\\(frontend_cryptoTools\\)/add_subdirectory(frontend_cryptoTools EXCLUDE_FROM_ALL)/' cryptoTools/CMakeLists.txt",
+        ],
         patches = ["@yacl//bazel:libote_fetch_mkdir.patch"],
     )
 

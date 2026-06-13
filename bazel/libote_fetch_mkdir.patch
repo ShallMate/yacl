@@ -12,38 +12,6 @@ diff --git a/cryptoTools/thirdparty/fetch.cmake b/cryptoTools/thirdparty/fetch.c
  
      execute_process(
          COMMAND ${PARSED_ARGS_CMD}
-diff --git a/CMakeLists.txt b/CMakeLists.txt
---- a/CMakeLists.txt
-+++ b/CMakeLists.txt
-@@ -88,12 +88,12 @@ if(ENABLE_MR_KYBER AND (NOT MSVC))
- endif()
- 
- add_subdirectory(libOTe)
--add_subdirectory(libOTe_Tests)
-+add_subdirectory(libOTe_Tests EXCLUDE_FROM_ALL)
- 
- #############################################
- #              Build Frontend               #
- #############################################
--add_subdirectory(frontend)
-+add_subdirectory(frontend EXCLUDE_FROM_ALL)
- 
- 
- 
-diff --git a/cryptoTools/CMakeLists.txt b/cryptoTools/CMakeLists.txt
---- a/cryptoTools/CMakeLists.txt
-+++ b/cryptoTools/CMakeLists.txt
-@@ -39,8 +39,8 @@ include("${CMAKE_CURRENT_LIST_DIR}/cmake/cryptoToolsDepHelper.cmake")
- 
- 
- add_subdirectory(cryptoTools)
--add_subdirectory(tests_cryptoTools)
--add_subdirectory(frontend_cryptoTools)
-+add_subdirectory(tests_cryptoTools EXCLUDE_FROM_ALL)
-+add_subdirectory(frontend_cryptoTools EXCLUDE_FROM_ALL)
- 
- configure_file(cryptoTools/Common/config.h.in "cryptoTools/Common/config.h" )
- 
 diff --git a/cryptoTools/cmake/install.cmake b/cryptoTools/cmake/install.cmake
 --- a/cryptoTools/cmake/install.cmake
 +++ b/cryptoTools/cmake/install.cmake
