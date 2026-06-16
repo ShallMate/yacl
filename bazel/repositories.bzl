@@ -62,6 +62,11 @@ def yacl_deps(include_examples = False, include_dev = False):
 def yacl_example_deps():
     _com_github_supranational_blst()
     _com_github_osu_crypto_libote()
+    _com_github_data61_mp_spdz()
+    _com_github_encryptogroup_aby()
+    _com_github_ladnir_aby3()
+    _com_github_naios_function2()
+    _com_github_nlohmann_json()
     _example_local_repositories()
     _eigen()
     _llvm_project_archives()
@@ -121,6 +126,53 @@ def _com_github_osu_crypto_libote():
             "perl -0pi -e 's/add_subdirectory\\(frontend_cryptoTools\\)/add_subdirectory(frontend_cryptoTools EXCLUDE_FROM_ALL)/' cryptoTools/CMakeLists.txt",
         ],
         patches = ["@yacl//bazel:libote_fetch_mkdir.patch"],
+    )
+
+def _com_github_data61_mp_spdz():
+    maybe(
+        git_repository,
+        name = "com_github_data61_mp_spdz",
+        remote = "https://github.com/data61/MP-SPDZ.git",
+        commit = "3a0a7b1d5e80e9f7e1b1ce76ae8b8a43931e80f4",
+        recursive_init_submodules = True,
+        build_file = "@yacl//bazel:mp_spdz.BUILD",
+    )
+
+def _com_github_encryptogroup_aby():
+    maybe(
+        git_repository,
+        name = "com_github_encryptogroup_aby",
+        remote = "https://github.com/encryptogroup/ABY.git",
+        commit = "d8e69414d091cafc007e65a03ef30768ebaf723d",
+        recursive_init_submodules = True,
+        build_file = "@yacl//bazel:aby.BUILD",
+    )
+
+def _com_github_ladnir_aby3():
+    maybe(
+        git_repository,
+        name = "com_github_ladnir_aby3",
+        remote = "https://github.com/ladnir/aby3.git",
+        commit = "e52b1d441b9456ffe1315862f22edb8280d42efd",
+        build_file = "@yacl//bazel:aby3.BUILD",
+    )
+
+def _com_github_naios_function2():
+    maybe(
+        git_repository,
+        name = "com_github_naios_function2",
+        remote = "https://github.com/Naios/function2.git",
+        commit = "d2acdb6c3c7612a6133cd03464ef941161258f4e",
+        build_file = "@yacl//bazel:function2.BUILD",
+    )
+
+def _com_github_nlohmann_json():
+    maybe(
+        git_repository,
+        name = "com_github_nlohmann_json",
+        remote = "https://github.com/nlohmann/json.git",
+        commit = "9cca280a4d0ccf0c08f47a99aa71d1b0e52f8d03",
+        build_file = "@yacl//bazel:nlohmann_json.BUILD",
     )
 
 def _example_local_repositories():
